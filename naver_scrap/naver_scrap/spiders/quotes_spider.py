@@ -5,6 +5,12 @@ class QuotesSpider(scrapy.Spider):
     # 스파이더의 식별자. 프로젝트 내에서 유일해야한다.
     name = "quotes"
 
+    custom_settings = {
+        'ITEM_PIPELINES': {
+            'naver_scrap.pipelines.NaverScrapPipeline': 300,
+        }
+    }
+
     # 스파이더가 크롤링을 시작할 반복 요청 (요청 목록을 반환하거나 생성기 함수를 작성할 수 있음)을 반환해야합니다. 후속 요청은 이러한 초기 요청에서 연속적으로 생성됩니다.
     def start_requests(self):
         urls = [
