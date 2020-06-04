@@ -37,12 +37,6 @@ def upload_file(a_key, s_key, file_name, bucket, object_name=None):
     return True
 
 
-def mk_gz(file, gz_name):
-    with open(file.name, 'rb') as f_in:
-        with gzip.open(gz_name, 'wb') as f_out:
-            shutil.copyfileobj(f_in, f_out)
-
-
 class NaverScrapPipeline:
     @classmethod
     def from_crawler(cls, crawler):
@@ -58,8 +52,6 @@ class NaverScrapPipeline:
         self.s3_access_key_secret = s3_access_key_secret
         self.prefix = prefix
         self.bucket_name = bucket_name
-        self.total_cnt = 1
-        self.del_line_num = 100
 
     # 스파이더가 오픈될때 호출됨
     def open_spider(self, spider):
@@ -70,30 +62,30 @@ class NaverScrapPipeline:
     # 스파이더가 닫힐때 호출됨
     def close_spider(self, spider):
         self.exporter.finish_exporting()
+        self.file.close()
+
+        gz_name = '{0}.gz'.format(self.file.name)
+
+        with open(self.file.name, 'rb') as f_in:
+            with gzip.open(gz_name, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+
+        dt = datetime.datetime.now()
+        object_name = 'year={0}/month={1}/day={2}/'.format(dt.year, dt.strftime('%m'), dt.strftime('%d'))
+        bucket_path = self.prefix + object_name + gz_name
+
+        # upload_file(
+        #     self.s3_access_key_id,
+        #     self.s3_access_key_secret,
+        #     gz_name,
+        #     self.bucket_name,
+        #     bucket_path
+        # )
 
     # 매 파이프라인 컴포넌트마다 호출됨.
     def process_item(self, item, spider):
-        if self.total_cnt % self.del_line_num == 0:
-            self.file.close()
-            gz_name = '{0}.gz'.format(self.file.name)
-            mk_gz(self.file, gz_name)
-
-            dt = datetime.datetime.now()
-            object_name = 'year={0}/month={1}/day={2}/'.format(dt.year, dt.strftime('%m'), dt.strftime('%d'))
-            bucket_path = self.prefix + object_name + gz_name
-
-            upload_file(
-                self.s3_access_key_id,
-                self.s3_access_key_secret,
-                gz_name,
-                self.bucket_name,
-                bucket_path
-            )
-
-            self.file = open('result{0}.csv'.format(round(self.total_cnt / self.del_line_num)), 'wb')
-            self.exporter = CsvItemExporter(self.file, encoding='utf-8')
-
-        self.total_cnt += 1
+        print('item ', item)
+        print('category_depth_setting: ', spider.category_depth_setting)
         self.exporter.export_item(item)
         return item
 
