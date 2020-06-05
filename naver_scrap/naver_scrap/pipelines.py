@@ -59,12 +59,12 @@ class NaverScrapPipeline:
         self.prefix = prefix
         self.bucket_name = bucket_name
         self.total_cnt = 1
-        self.del_line_num = 100
+        self.del_line_num = 5000
 
     # 스파이더가 오픈될때 호출됨
     def open_spider(self, spider):
-        self.file = open('result.csv', 'wb')
-        self.exporter = CsvItemExporter(self.file, encoding='utf-8')
+        self.file = open('best_item.csv', 'wb')
+        self.exporter = CsvItemExporter(self.file, encoding='utf-8', include_headers_line=False)
         self.exporter.start_exporting()
 
     # 스파이더가 닫힐때 호출됨
@@ -79,7 +79,7 @@ class NaverScrapPipeline:
             mk_gz(self.file, gz_name)
 
             dt = datetime.datetime.now()
-            object_name = 'year={0}/month={1}/day={2}/'.format(dt.year, dt.strftime('%m'), dt.strftime('%d'))
+            object_name = 'nvshop_best_item/year={0}/month={1}/day={2}/'.format(dt.year, dt.strftime('%m'), dt.strftime('%d'))
             bucket_path = self.prefix + object_name + gz_name
 
             upload_file(
@@ -90,8 +90,8 @@ class NaverScrapPipeline:
                 bucket_path
             )
 
-            self.file = open('result{0}.csv'.format(round(self.total_cnt / self.del_line_num)), 'wb')
-            self.exporter = CsvItemExporter(self.file, encoding='utf-8')
+            self.file = open('{0}best_item.csv'.format(round(self.total_cnt / self.del_line_num)), 'wb')
+            self.exporter = CsvItemExporter(self.file, encoding='utf-8', include_headers_line=False)
 
         self.total_cnt += 1
         self.exporter.export_item(item)
