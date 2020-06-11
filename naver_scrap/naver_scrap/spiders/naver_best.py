@@ -5,6 +5,7 @@ from scrapy.spiders import CrawlSpider, Rule
 from fake_useragent import UserAgent
 from urllib.parse import urlparse, parse_qs,parse_qsl , urlencode, urlunparse
 import logging
+from datetime import datetime
 
 ua = UserAgent()
 '''
@@ -17,8 +18,8 @@ category_test_link = 'https://search.shopping.naver.com/best100v2/detail.nhn?cat
 # 인기 검색어 / 브랜드 request url
 best_keyword_url = 'https://search.shopping.naver.com/best100v2/detail/kwd.nhn'
 
-crawl_item = False
-crawl_keyword = False
+crawl_item = True
+crawl_keyword = True
 crawl_brand = True
 
 def set_best_keyword_url(url, query):
@@ -46,7 +47,11 @@ class NaverBestCategorySpider(scrapy.Spider):
         'LOG_LEVEL': log_level,
         'ITEM_PIPELINES': {
             'naver_scrap.pipelines.NaverScrapPipeline': 300,
-        }
+        },
+        # 크롤링 여부
+        'CRAWL_ITEM': crawl_item,
+        'CRAWL_KEYWORD': crawl_keyword,
+        'CRAWL_BRAND': crawl_brand,
     }
 
     def __init__(self, category=None, *args, **kwargs):
@@ -191,12 +196,36 @@ class NaverBestCategorySpider(scrapy.Spider):
         print(response.text)
 
     def parse_best_keyword(self, response, **cb_kwargs):
-        print(response.request.url)
-        print(cb_kwargs)
+        rnk_list = response.css('#popular_srch_lst > li')
+
+        for rnk in rnk_list:
+            rnk_flg = rnk.css('span.vary span::text').get().strip()
+            elev_width = int(rnk.css('span.vary::text')[1].get().strip() or 0)
+
+            keyword_data = {
+                'rnk': rnk.css('em::text').get()[:-1],
+                'keyword': rnk.css('span.txt a::attr(title)').get().strip(),
+                'trend': elev_width if rnk_flg == '상승' else elev_width * -1 if rnk_flg == '하락' else 0,
+                'fixeddate': str(datetime.now()),
+            }
+            keyword_data.update(cb_kwargs)
+
+            yield
 
     def parse_best_brand(self, response, **cb_kwargs):
-        print(response.request.url)
-        print(cb_kwargs)
+        rnk_list = response.css('#popular_srch_lst > li')
+
+        for rnk in rnk_list:
+            rnk_flg = rnk.css('span.vary span::text').get().strip()
+            elev_width = int(rnk.css('span.vary::text')[1].get().strip() or 0)
+
+            brand_data = {
+                'rnk': rnk.css('em::text').get()[:-1],
+                'keyword': rnk.css('span.txt a::attr(title)').get().strip(),
+                'trend': elev_width if rnk_flg == '상승' else elev_width * -1 if rnk_flg == '하락' else 0,
+                'fixeddate': str(datetime.now()),
+            }
+            brand_data.update(cb_kwargs)
 
 
 
@@ -263,23 +292,23 @@ class NaverBestCategorySpider(scrapy.Spider):
             인기 검색어 파싱, 인기 브랜드 파싱            
         """
         # https://search.shopping.naver.com/best100v2/detail/kwd.nhn?catId=50001376&kwdType=KWD&dateType=week&startDate=2020.05.29&endDate=2020.06.04
-        req_urls = [
+        req_params = [
             # 인기검색어
-            {
-                'catId': cate_id,
-                'kwdType': 'KWD',
-                'dateType': 'week',
-            },
             {
                 'catId': cate_id,
                 'kwdType': 'KWD',
                 'dateType': 'today',
             },
+            {
+                'catId': cate_id,
+                'kwdType': 'KWD',
+                'dateType': 'week',
+            },
             # 인기 브랜드
             {
                 'catId': cate_id,
                 'kwdType': 'BRD',
-                'dateType': 'week',
+                'dateType': 'today',
             },
             {
                 'catId': cate_id,
@@ -288,23 +317,20 @@ class NaverBestCategorySpider(scrapy.Spider):
             },
         ]
 
-        for best_kb_url in req_urls:
+        for best_kb_params in req_params:
             keyword_args = {
                 'cate_id': cate_id,
-                'period': '',
-                'rnk': '',
-                'gb': '',
-                'keyword': '',
-                'trend': '',
-                'fixeddate': '',
+                'period': 'daily' if best_kb_params['dateType'] == 'today' else 'weekly',
+                'gb': 'keyword' if best_kb_params['kwdType'] == 'KWD' else 'brand',
+                'type': 'nvshop_best_keyword' if best_kb_params['kwdType'] == 'KWD' else 'nvshop_best_brand',
             }
-            tmp_url = set_best_keyword_url(best_keyword_url, query=best_kb_url)
-            if crawl_keyword and best_kb_url['kwdType'] == 'KWD':
+            tmp_url = set_best_keyword_url(best_keyword_url, query=best_kb_params)
+            if crawl_keyword and best_kb_params['kwdType'] == 'KWD':
                 yield scrapy.Request(url=tmp_url, callback=self.parse_best_keyword,
                                      cb_kwargs=keyword_args,
                                      # headers={'User-Agent': str(ua.chrome)}
                                      )
-            if crawl_brand and best_kb_url['kwdType'] == 'BRD':
+            if crawl_brand and best_kb_params['kwdType'] == 'BRD':
                 yield scrapy.Request(url=tmp_url, callback=self.parse_best_brand,
                                      cb_kwargs=keyword_args,
                                      # headers={'User-Agent': str(ua.chrome)}
