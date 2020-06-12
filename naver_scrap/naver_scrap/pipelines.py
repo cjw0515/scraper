@@ -4,6 +4,9 @@
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
+import sys
+sys.path.append("C:/anaconda3/envs/scraper-10x10/Lib/site-packages")
+
 from scrapy import signals
 import datetime
 import logging
@@ -12,7 +15,6 @@ from botocore.exceptions import ClientError
 from scrapy.exporters import CsvItemExporter, JsonItemExporter
 from scrapy.exceptions import DropItem
 import gzip, shutil, io, os
-
 
 def s3_upload_file(a_key, s_key, file_name, bucket, object_name=None):
     """Upload a file to an S3 bucket
@@ -63,66 +65,39 @@ class NaverScrapPipeline:
         self.s3_access_key_secret = s3_access_key_secret
         self.bucket_path_prefix = bucket_path_prefix
         self.bucket_name = bucket_name
-
+        # 베스트 아이템
         self.item_conf = {
             'total_line': 1,
-            'del_line_num': 30,
+            'del_line_num': 3000,
             'file': None,
             'file_name': 'best_item.csv',
             'exporter': None,
-            'is_upload': False,
+            'is_upload': True,
             'op_stat': crawl_op_stat['crawl_item'],
             's3_group': 'nvshop_best_item'
         }
-
+        # 베스트 키워드
         self.kwd_conf = {
             'total_line': 1,
-            'del_line_num': 30,
+            'del_line_num': 3000,
             'file': None,
             'file_name': 'best_kwd.csv',
             'exporter': None,
-            'is_upload': False,
+            'is_upload': True,
             'op_stat': crawl_op_stat['crawl_keyword'],
             's3_group': 'nvshop_best_keyword'
         }
-
+        # 베스트 브랜드
         self.brd_conf = {
             'total_line': 1,
-            'del_line_num': 30,
+            'del_line_num': 3000,
             'file': None,
             'file_name': 'best_brd.csv',
             'exporter': None,
-            'is_upload': False,
+            'is_upload': True,
             'op_stat': crawl_op_stat['crawl_brand'],
             's3_group': 'nvshop_best_brand'
         }
-
-        # # 베스트 아이템
-        # self.item_total_line = 1
-        # self.item_del_line_num = 30
-        # self.item_file = None
-        # self.item_file_name = 'best_item.csv'
-        # self.item_exporter = None
-        # self.item_is_upload = False
-        # # 베스트 키워드
-        # self.kwd_total_line = 1
-        # self.kwd_del_line_num = 5000
-        # self.kwd_file = None
-        # self.kwd_file_name = 'best_kwd.csv'
-        # self.kwd_exporter = None
-        # self.kwd_is_upload = False
-        # # 베스트 브랜드
-        # self.brd_total_line = 1
-        # self.brd_del_line_num = 5000
-        # self.brd_file = None
-        # self.brd_file_name = 'best_brd.csv'
-        # self.brd_exporter = None
-        # self.brd_is_upload = False
-
-        # # 데이터별 크롤링 여부
-        # self.crawl_item = crawl_op_stat['crawl_item']
-        # self.crawl_keyword = crawl_op_stat['crawl_keyword']
-        # self.crawl_brand = crawl_op_stat['crawl_brand']
 
     # 스파이더가 오픈될때 호출됨
     def open_spider(self, spider):
@@ -130,7 +105,7 @@ class NaverScrapPipeline:
 
         for conf in data_conf_cont:
             if conf['op_stat']:
-                conf['file'] = open(conf['file_name'], 'wb')
+                conf['file'] = open('1_'+conf['file_name'], 'wb')
                 conf['exporter'] = CsvItemExporter(conf['file'], encoding='utf-8', include_headers_line=False)
                 conf['exporter'].start_exporting()
 
@@ -159,8 +134,8 @@ class NaverScrapPipeline:
         if conf['total_line'] % conf['del_line_num'] == 0:
             # 스트림 닫고 업로드
             self.close_exporter(conf['file'], s3_group=conf['s3_group'], is_upload=conf['is_upload'])
-            conf['file'] = open('{0}{1}'.format(round(conf['total_line'] / conf['del_line_num'])
-                                                , conf['file_name'])
+            conf['file'] = open('{0}_{1}'.format(round(conf['total_line'] / conf['del_line_num'] + 1)
+                                                 , conf['file_name'])
                                 , 'wb')
             conf['exporter'] = CsvItemExporter(conf['file'], encoding='utf-8', include_headers_line=False)
 

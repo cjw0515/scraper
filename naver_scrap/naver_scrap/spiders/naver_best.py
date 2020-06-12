@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import sys
+sys.path.append("C:/anaconda3/envs/scraper-10x10/Lib/site-packages")
 import scrapy
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
@@ -12,9 +14,10 @@ ua = UserAgent()
     depth 제한 
     최대 4 최소 2    
 '''
-category_depth_setting = 2
+category_depth_setting = 4
 log_level = 'INFO'
-category_test_link = 'https://search.shopping.naver.com/best100v2/detail.nhn?catId=50001376'
+# category_test_link = 'https://search.shopping.naver.com/best100v2/detail.nhn?catId=50000000'
+category_test_link = ''
 # 인기 검색어 / 브랜드 request url
 best_keyword_url = 'https://search.shopping.naver.com/best100v2/detail/kwd.nhn'
 
@@ -42,7 +45,7 @@ class NaverBestCategorySpider(scrapy.Spider):
     custom_settings = {
         'AUTOTHROTTLE_ENABLED': True,
         'AUTOTHROTTLE_START_DELAY': 5,
-        'AUTOTHROTTLE_TARGET_CONCURRENCY': 2.0,
+        'AUTOTHROTTLE_TARGET_CONCURRENCY': 1.0,
         'DOWNLOAD_DELAY': 0.5,
         'LOG_LEVEL': log_level,
         'ITEM_PIPELINES': {
@@ -151,9 +154,6 @@ class NaverBestCategorySpider(scrapy.Spider):
             if len(top_mall_list) == 1:
                 return top_mall_list[0].css('td.mall_area > div > span.mall > a::text').get().strip() or ''
 
-        def get_storefarm_ratio(top_mall_list, sf):
-            return str(len(sf)) + '/' + str(len(top_mall_list)) if len(sf) != 0 else 0
-
             # _mainSummaryPrice > table > tbody > tr:nth-child(2) > td.mall_area > div > span.mall_cell > span
         chart = response.css('#bar-container > ul > li')
         goods_info = response.css('#container div.goods_info div.info_inner span')
@@ -172,10 +172,11 @@ class NaverBestCategorySpider(scrapy.Spider):
                 'min_price': response.css('#content > div > div.summary_cet > div.price_area > span > em::text').get(),
                 'manufacturer': get_goods_info(goods_info, '제조사'),
                 'brand': get_goods_info(goods_info, '브랜드'),
-                'reg_date': get_goods_info(goods_info, '등록일'),
+                'reg_date': get_goods_info(goods_info, '등록일').replace(".", "-") + "01",
                 'wish_cnt': response.css('#jjim > em.cnt._keepCount::text').get(),
                 'review_cnt': response.css('#snb > ul > li.mall_review > a > em::text').get(),
-                'storefarm_ratio': get_storefarm_ratio(top_mall_list, sf)
+                'storefarm_num': len(sf),
+                'top_store_num': len(top_mall_list),
             }
             item_details.update(cb_kwargs)
             # 데이터 구분값
@@ -210,7 +211,7 @@ class NaverBestCategorySpider(scrapy.Spider):
             }
             keyword_data.update(cb_kwargs)
 
-            yield
+            yield keyword_data
 
     def parse_best_brand(self, response, **cb_kwargs):
         rnk_list = response.css('#popular_srch_lst > li')
@@ -226,6 +227,8 @@ class NaverBestCategorySpider(scrapy.Spider):
                 'fixeddate': str(datetime.now()),
             }
             brand_data.update(cb_kwargs)
+
+            yield brand_data
 
 
 
@@ -277,7 +280,9 @@ class NaverBestCategorySpider(scrapy.Spider):
                         'reg_date': '',
                         'wish_cnt': '',
                         'review_cnt': '',
-                        'storefarm_ratio': ''
+                        'storefarm_num': 0,
+                        'top_store_num': 0,
+                        'type': 'nvshop_best_item'
                     }
                     details.update(detail_args)
                     logging.log(logging.INFO, '카테고리 :' + details['cate_name'] + '/ 이름: ' + details['item_nm'])

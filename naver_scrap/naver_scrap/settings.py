@@ -8,10 +8,10 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+import sys, os
+sys.path.append("C:/anaconda3/envs/scraper-10x10/Lib/site-packages")
 from dotenv import load_dotenv, find_dotenv
-import os
 load_dotenv(find_dotenv())
-
 BOT_NAME = 'naver_scrap'
 
 SPIDER_MODULES = ['naver_scrap.spiders']
@@ -27,8 +27,8 @@ AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
 BUCKET_NAME = 'bi-temp'
 BUCKET_PREFIX = 'datalake/crawling/'
 
-LOG_LEVEL = 'ERROR'
-# LOG_LEVEL = 'INFO'
+# LOG_LEVEL = 'ERROR'
+LOG_LEVEL = 'INFO'
 
 # FEEDS = {
 #     's3://bi-temp/datalake/crawling/test.json': {
