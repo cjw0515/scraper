@@ -10,7 +10,8 @@ htmlcov/
 dist/
 build/
 *.egg-info/
-.eggs
+*.eggs
+*.egg
 .idea/
 *.swp
 *~
@@ -21,3 +22,6 @@ env.*
 *.db
 *.out
 *.pid
+*.log
+*_bak.py
+setup.py
