@@ -14,10 +14,10 @@ ua = UserAgent()
     depth 제한 
     최대 4 최소 2    
 '''
-category_depth_setting = 4
+category_depth_setting = 2
 log_level = 'INFO'
-# category_test_link = 'https://search.shopping.naver.com/best100v2/detail.nhn?catId=50000000'
-category_test_link = ''
+category_test_link = 'https://search.shopping.naver.com/best100v2/detail.nhn?catId=50000000'
+# category_test_link = ''
 # 인기 검색어 / 브랜드 request url
 best_keyword_url = 'https://search.shopping.naver.com/best100v2/detail/kwd.nhn'
 
