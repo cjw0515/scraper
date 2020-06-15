@@ -3,17 +3,33 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=0_gnu
   - attrs=19.3.0=py_0
   - automat=20.2.0=py_0
+  - bcrypt=3.1.7=py37h8f50634_1
   - ca-certificates=2020.4.5.1=hecc5488_0
   - certifi=2020.4.5.1=py37hc8dfbb8_0
+  - cffi=1.14.0=py37hd463f26_0
   - constantly=15.1.0=py_0
+  - cryptography=2.9.2=py37hb09aad4_0
   - cssselect=1.1.0=py_0
   - hyperlink=19.0.0=pyh9f0ad1d_0
+  - icu=67.1=he1b5a44_0
   - idna=2.9=py_1
   - incremental=17.5.0=py_0
+  - ld_impl_linux-64=2.34=h53a641e_5
+  - libffi=3.2.1=he1b5a44_1007
+  - libgcc-ng=9.2.0=h24d8f2e_2
+  - libgomp=9.2.0=h24d8f2e_2
+  - libiconv=1.15=h516909a_1006
+  - libstdcxx-ng=9.2.0=hdf63c60_2
+  - libxml2=2.9.10=h72b56ed_1
+  - libxslt=1.1.33=h572872d_1
+  - lxml=4.5.1=py37he3881c9_0
+  - ncurses=6.1=hf484d3e_1002
+  - openssl=1.1.1g=h516909a_0
   - parsel=1.5.2=py_0
-  - pip=20.0.2=py37_3
   - protego=0.1.16=py_0
   - pyasn1=0.4.8=py_0
   - pyasn1-modules=0.2.7=py_0
@@ -21,44 +37,36 @@ dependencies:
   - pydispatcher=2.0.5=py_1
   - pyhamcrest=2.0.2=py_0
   - pyopenssl=19.1.0=py_1
+  - python=3.7.6=cpython_h8356626_6
   - python_abi=3.7=1_cp37m
   - queuelib=1.5.0=pyh9f0ad1d_0
+  - readline=8.0=hf8c457e_0
   - scrapy=2.1.0=py37hc8dfbb8_1
   - service_identity=18.1.0=py_0
   - setuptools=46.4.0=py37_0
   - six=1.15.0=pyh9f0ad1d_0
+  - sqlite=3.30.1=hcee41ef_0
+  - tk=8.6.10=hed695b0_0
+  - twisted=20.3.0=py37h8f50634_0
   - w3lib=1.20.0=py_0
   - wheel=0.34.2=py37_0
+  - xz=5.2.5=h516909a_0
+  - zlib=1.2.11=h516909a_1006
+  - zope.interface=5.1.0=py37h8f50634_0
   - pip:
-    - boto3==1.13.19
-    - botocore==1.16.19
+    - boto3==1.14.2
+    - botocore==1.17.2
     - chardet==3.0.4
     - docutils==0.15.2
     - fake-useragent==0.1.11
     - jmespath==0.10.0
+    - pip==20.1.1
     - python-dateutil==2.8.1
     - python-dotenv==0.13.0
     - requests==2.23.0
     - s3transfer==0.3.3
     - scrapyd==1.2.1
-    - scrapyd-client==1.2.0a1
+    - scrapyd-client==1.1.0
     - urllib3==1.25.9
-    - python==3.7.7=h81c818b_4
-    - lxml==4.5.1=py37h8ba8a40_0
-    - sqlite==3.31.1=h2a8f88b_1
-    - cffi==1.14.0=py37ha419a9e_0
-    - zope.interface==5.1.0=py37h8055547_0
-    - vc==14.1=h0510ff6_4
-    - libxml2==2.9.10=h5d81f1c_1
-    - cryptography==2.9.2=py37h26f1ce3_0
-    - libiconv==1.15=hfa6e2cd_1006
-    - openssl==1.1.1g=he774522_0
-    - bcrypt==3.1.7=py37h8055547_1
-    - libxslt==1.1.33=h579f668_1
-    - twisted==20.3.0=py37h8055547_0
-    - pywin32==227=py37hfa6e2cd_0
-    - wincertstore==0.2=py37_0
-    - zlib==1.2.11=h62dcd97_4
-    - vs2015_runtime==14.16.27012=hf0eaf9b_2
-prefix: C:\anaconda3\envs\scraper-10x10
+prefix: /home/crawladmin/anaconda3/envs/scraper-10x10
 
