@@ -6,8 +6,10 @@
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
-
-
+from scrapy.downloadermiddlewares.retry import RetryMiddleware
+from scrapy.utils.response import response_status_message
+from time import sleep
+import logging
 
 class NaverScrapSpiderMiddleware:
     # Not all methods need to be defined. If a method is not defined,
@@ -102,6 +104,21 @@ class NaverScrapDownloaderMiddleware:
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+
+
+class SleepRetryMiddleware(RetryMiddleware):
+    def __init__(self, settings):
+        RetryMiddleware.__init__(self, settings)
+
+    def process_response(self, request, response, spider):
+        if response.status in [429]:
+            logging.log(logging.ERROR, 'sleep 30 seconds... at ' + request.url)
+            sleep(30)
+            reason = response_status_message(response.status)
+            return self._retry(request, reason, spider) or response
+
+        return super(SleepRetryMiddleware, self).process_response(request, response, spider)
+
 
 class NaverScrapDownloaderProxyMiddleware(object):
     def process_request(self, request, spider):
