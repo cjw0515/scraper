@@ -5,6 +5,7 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 import sys
+
 sys.path.append("C:/anaconda3/envs/scraper-10x10/Lib/site-packages")
 
 from scrapy import signals
@@ -15,6 +16,7 @@ from botocore.exceptions import ClientError
 from scrapy.exporters import CsvItemExporter, JsonItemExporter
 from scrapy.exceptions import DropItem
 import gzip, shutil, io, os
+
 
 def s3_upload_file(a_key, s_key, file_name, bucket, object_name=None):
     """Upload a file to an S3 bucket
@@ -53,6 +55,8 @@ class NaverScrapPipeline:
             s3_access_key_secret=crawler.settings.get('AWS_SECRET_ACCESS_KEY'),
             bucket_path_prefix=crawler.settings.get('BUCKET_PREFIX'),
             bucket_name=crawler.settings.get('BUCKET_NAME'),
+            instance_id=crawler.settings.get('INSTANCE_ID'),
+            file_remove=crawler.settings.get('FILE_REMOVE'),
             crawl_op_stat={
                 'crawl_item': crawler.settings.get('CRAWL_ITEM'),
                 'crawl_keyword': crawler.settings.get('CRAWL_KEYWORD'),
@@ -60,17 +64,20 @@ class NaverScrapPipeline:
             }
         )
 
-    def __init__(self, s3_access_key_id, s3_access_key_secret, bucket_path_prefix, bucket_name, crawl_op_stat):
+    def __init__(self, s3_access_key_id, s3_access_key_secret, bucket_path_prefix,
+                 bucket_name, instance_id, file_remove, crawl_op_stat):
         self.s3_access_key_id = s3_access_key_id
         self.s3_access_key_secret = s3_access_key_secret
         self.bucket_path_prefix = bucket_path_prefix
         self.bucket_name = bucket_name
+        self.instance_id = instance_id
+        self.file_remove = file_remove
         # 베스트 아이템
         self.item_conf = {
             'total_line': 1,
             'del_line_num': 3000,
             'file': None,
-            'file_name': 'best_item.csv',
+            'file_name': 'best_item-{0}.csv'.format(instance_id),
             'exporter': None,
             'is_upload': True,
             'op_stat': crawl_op_stat['crawl_item'],
@@ -81,7 +88,7 @@ class NaverScrapPipeline:
             'total_line': 1,
             'del_line_num': 3000,
             'file': None,
-            'file_name': 'best_kwd.csv',
+            'file_name': 'best_kwd-{0}.csv'.format(instance_id),
             'exporter': None,
             'is_upload': True,
             'op_stat': crawl_op_stat['crawl_keyword'],
@@ -92,7 +99,7 @@ class NaverScrapPipeline:
             'total_line': 1,
             'del_line_num': 3000,
             'file': None,
-            'file_name': 'best_brd.csv',
+            'file_name': 'best_brd-{0}.csv'.format(instance_id),
             'exporter': None,
             'is_upload': True,
             'op_stat': crawl_op_stat['crawl_brand'],
@@ -105,7 +112,7 @@ class NaverScrapPipeline:
 
         for conf in data_conf_cont:
             if conf['op_stat']:
-                conf['file'] = open('1_'+conf['file_name'], 'wb')
+                conf['file'] = open('1_' + conf['file_name'], 'wb')
                 conf['exporter'] = CsvItemExporter(conf['file'], encoding='utf-8', include_headers_line=False)
                 conf['exporter'].start_exporting()
 
@@ -161,5 +168,6 @@ class NaverScrapPipeline:
                 self.bucket_name,
                 bucket_path
             )
-
-
+        if self.file_remove:
+            os.remove(file_stream.name)
+            os.remove(gz_name)
