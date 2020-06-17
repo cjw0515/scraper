@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import sys
+import sys, os
 
 sys.path.append("C:/anaconda3/envs/scraper-10x10/Lib/site-packages")
 import scrapy
@@ -13,18 +13,22 @@ from datetime import datetime
 ua = UserAgent()
 '''
     depth 제한 
-    최대 4 최소 2    
+    최대 4 최소 1    
 '''
-category_depth_setting = 3
-log_level = 'INFO'
-# category_test_link = 'https://search.shopping.naver.com/best100v2/detail.nhn?catId=50000000'
-category_test_link = ''
+
 # 인기 검색어 / 브랜드 request url
 best_keyword_url = 'https://search.shopping.naver.com/best100v2/detail/kwd.nhn'
 
+category_depth_allow = 1
 crawl_item = True
-crawl_keyword = True
-crawl_brand = True
+crawl_keyword = False
+crawl_brand = False
+
+if os.environ['ENV'] == 'prod':
+    category_depth_allow = 3
+    crawl_item = True
+    crawl_keyword = True
+    crawl_brand = True
 
 
 def set_best_keyword_url(url, query):
@@ -48,11 +52,10 @@ nvshop_best_brand   : 베스트 브랜드
 class NaverBestCategorySpider(scrapy.Spider):
     name = 'naver_best_category'
     custom_settings = {
-        # 'AUTOTHROTTLE_ENABLED': True,
-        # 'AUTOTHROTTLE_START_DELAY': 5,
-        # 'AUTOTHROTTLE_TARGET_CONCURRENCY': 1.0,
+        'AUTOTHROTTLE_ENABLED': True,
+        'AUTOTHROTTLE_START_DELAY': 5,
+        'AUTOTHROTTLE_TARGET_CONCURRENCY': 1.0,
         'DOWNLOAD_DELAY': 0.2,
-        'LOG_LEVEL': log_level,
         'ITEM_PIPELINES': {
             'naver_scrap.pipelines.NaverScrapPipeline': 300,
         },
@@ -62,9 +65,9 @@ class NaverBestCategorySpider(scrapy.Spider):
         'CRAWL_BRAND': crawl_brand,
     }
 
-    def __init__(self, categories=None, *args, **kwargs):
+    def __init__(self, categories=None, depth=None, *args, **kwargs):
         super(NaverBestCategorySpider, self).__init__(*args, **kwargs)
-        self.category_depth_setting = category_depth_setting
+        self.category_depth_allow = int(depth) if depth else int(category_depth_allow)
         self.categories = categories
 
     def parse_first_depth(self, response):
@@ -89,61 +92,23 @@ class NaverBestCategorySpider(scrapy.Spider):
         '''
         # yield from response.follow_all(links, callback=self.parse_second_depth)
 
-        '''
-            분석 페이지 생성
-        '''
-        # page = response.url.split("/")[-2]
-        # filename = 'quotes-%s.html' % page
-        # with open(filename, 'wb') as f:
-        #     f.write(response.body)
-        # self.log('Saved file %s' % filename)
-
     def start_requests(self):
-        if not category_test_link:
-            if self.categories:
-                urls = map(lambda x: "https://search.shopping.naver.com/best100v2/detail.nhn?catId={0}".format(x)
-                           , self.categories.split(','))
-                cb_kwargs = {'pre_categories': {}}
-                for url in urls:
-                    yield scrapy.Request(url=url, callback=self.parse_morethan_second_depth,
-                                         cb_kwargs=cb_kwargs,
-                                         # headers={'User-Agent': str(ua.chrome)}
-                                         )
-            else:
-                urls = [
-                    'https://search.shopping.naver.com/best100v2/main.nhn'
-                ]
-                # yield scrapy.Request(url="http://httpbin.org/ip", callback=self.chk_ip)
-                for url in urls:
-                    yield scrapy.Request(url=url, callback=self.parse_first_depth)
-
-        '''    
-        urls = [
-            'https://search.shopping.naver.com/detail/detail.nhn?cat_id=50002170&nv_mid=20811239770&NaPm=ct%3Dkb0e7u80%7Cci%3D1999b2bad27c658327cfac0541fcc1e1ab185c7d%7Ctr%3Dsl%7Csn%3D95694%7Chk%3D237f87af54e2d66080c158012842543058513dcb'
-        ]
-        detail_args = {
-            'image_url': 'test data',
-            'cate_id': 'test data',
-            'rnk': 'test data',
-            'nv_mid': 'test data',
-            'item_url': 'test data',
-            'item_nm': 'test data',
-        }
-        for url in urls:
-            yield scrapy.Request(url=url, callback=self.parse_best_100_in_detail, cb_kwargs=detail_args)
-        '''
-        if category_test_link:
-            cb_kwargs = {'cate_name': 'test', 'depth': 1, 'pre_categories': {}}
-
-            urls = [
-                category_test_link
-            ]
-            # yield scrapy.Request(url="http://httpbin.org/ip", callback=self.chk_ip)
+        if self.categories:
+            urls = map(lambda x: "https://search.shopping.naver.com/best100v2/detail.nhn?catId={0}".format(x)
+                       , self.categories.split(','))
+            cb_kwargs = {'pre_categories': {}}
             for url in urls:
                 yield scrapy.Request(url=url, callback=self.parse_morethan_second_depth,
                                      cb_kwargs=cb_kwargs,
                                      # headers={'User-Agent': str(ua.chrome)}
                                      )
+        else:
+            urls = [
+                'https://search.shopping.naver.com/best100v2/main.nhn'
+            ]
+            # yield scrapy.Request(url="http://httpbin.org/ip", callback=self.chk_ip)
+            for url in urls:
+                yield scrapy.Request(url=url, callback=self.parse_first_depth)
 
     def parse_best_100_in_detail(self, response, **cb_kwargs):
         def get_age_grades(charts, grade):
@@ -199,7 +164,7 @@ class NaverBestCategorySpider(scrapy.Spider):
             # 데이터 구분값
             item_details['type'] = 'nvshop_best_item'
         except Exception as e:
-            print(cb_kwargs['item_nm'])
+            logging.log(logging.ERROR, (cb_kwargs['item_nm']))
         try:
             logging.log(logging.INFO,
                         'depth :[{0}] / 카테고리 :'.format(cb_kwargs['depth']) + cb_kwargs['cate_name'] + '/ 이름: '
@@ -266,7 +231,9 @@ class NaverBestCategorySpider(scrapy.Spider):
                        )
             )
         )
-        logging.log(logging.INFO, 'depth: [{0}]'.format(depth) + ',cate_name: ' + cate_name + ': ' + response.request.url)
+        logging.log(logging.INFO, '=============================== depth: [{0}]'
+                    .format(depth) + ',cate_name: ' + cate_name + ': '
+                    + response.request.url + ' ===============================')
         # print('pre categories: ', pre_categories)
         # print('current categories: ', current_categories)
         """
@@ -361,7 +328,7 @@ class NaverBestCategorySpider(scrapy.Spider):
                                      # headers={'User-Agent': str(ua.chrome)}
                                      )
 
-        if depth >= category_depth_setting:
+        if depth >= self.category_depth_allow:
             return
 
         """
