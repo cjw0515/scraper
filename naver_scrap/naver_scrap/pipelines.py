@@ -50,6 +50,14 @@ def mk_gz(file, gz_name):
 class NaverScrapPipeline:
     @classmethod
     def from_crawler(cls, crawler):
+        crawl_op_stat = {
+            # best
+            'crawl_item': crawler.settings.get('CRAWL_ITEM') or None,
+            'crawl_keyword': crawler.settings.get('CRAWL_KEYWORD') or None,
+            'crawl_brand': crawler.settings.get('CRAWL_BRAND') or None,
+            # trend
+            'crawl_trend': True
+        }
         return cls(
             s3_access_key_id=crawler.settings.get('AWS_ACCESS_KEY_ID'),
             s3_access_key_secret=crawler.settings.get('AWS_SECRET_ACCESS_KEY'),
@@ -57,11 +65,7 @@ class NaverScrapPipeline:
             bucket_name=crawler.settings.get('BUCKET_NAME'),
             instance_id=crawler.settings.get('INSTANCE_ID'),
             file_remove=crawler.settings.get('FILE_REMOVE'),
-            crawl_op_stat={
-                'crawl_item': crawler.settings.get('CRAWL_ITEM'),
-                'crawl_keyword': crawler.settings.get('CRAWL_KEYWORD'),
-                'crawl_brand': crawler.settings.get('CRAWL_BRAND'),
-            }
+            crawl_op_stat=crawl_op_stat
         )
 
     def __init__(self, s3_access_key_id, s3_access_key_secret, bucket_path_prefix,
@@ -105,12 +109,27 @@ class NaverScrapPipeline:
             'op_stat': crawl_op_stat['crawl_brand'],
             's3_group': 'nvshop_best_brand'
         }
+        # 트렌드 키워드
+        self.trend_kwd_conf = {
+            'total_line': 1,
+            'del_line_num': 3000,
+            'file': None,
+            'file_name': 'trend_kwd-{0}.csv'.format(instance_id),
+            'exporter': None,
+            'is_upload': True,
+            'op_stat': crawl_op_stat['crawl_trend'],
+            's3_group': 'dlabtrend'
+        }
+        # 크롤링 묶음
+        self.data_conf_cont = {
+            'naver_best_category': [self.item_conf, self.kwd_conf, self.brd_conf],
+            'naver_datalab_trend': [self.trend_kwd_conf]
+        }
+
 
     # 스파이더가 오픈될때 호출됨
     def open_spider(self, spider):
-        data_conf_cont = [self.item_conf, self.kwd_conf, self.brd_conf]
-
-        for conf in data_conf_cont:
+        for conf in self.data_conf_cont[spider.name]:
             if conf['op_stat']:
                 conf['file'] = open('1_' + conf['file_name'], 'wb')
                 conf['exporter'] = CsvItemExporter(conf['file'], encoding='utf-8', include_headers_line=False)
@@ -118,25 +137,28 @@ class NaverScrapPipeline:
 
     # 스파이더가 닫힐때 호출됨
     def close_spider(self, spider):
-        data_conf_cont = [self.item_conf, self.kwd_conf, self.brd_conf]
-
-        for conf in data_conf_cont:
+        for conf in self.data_conf_cont[spider.name]:
             if conf['op_stat']:
                 self.close_exporter(conf['file'], s3_group=conf['s3_group'], is_upload=conf['is_upload'])
                 conf['exporter'].finish_exporting()
 
     # 매 파이프라인 컴포넌트마다 호출됨.
     def process_item(self, item, spider):
-        if self.item_conf['op_stat'] and item['type'] == 'nvshop_best_item':
-            self.data_save(item, self.item_conf)
-        if self.kwd_conf['op_stat'] and item['type'] == 'nvshop_best_keyword':
-            self.data_save(item, self.kwd_conf)
-        if self.brd_conf['op_stat'] and item['type'] == 'nvshop_best_brand':
-            self.data_save(item, self.brd_conf)
+        try:
+            if self.item_conf['op_stat'] and item['type'] == 'nvshop_best_item':
+                self.data_save(item, self.item_conf)
+            if self.kwd_conf['op_stat'] and item['type'] == 'nvshop_best_keyword':
+                self.data_save(item, self.kwd_conf)
+            if self.brd_conf['op_stat'] and item['type'] == 'nvshop_best_brand':
+                self.data_save(item, self.brd_conf)
+            if self.trend_kwd_conf['op_stat'] and item['type'] == 'dlabtrend':
+                self.data_save(item, self.trend_kwd_conf)
+        except Exception as e:
+            print(e)
+            pass
 
         return item
 
-    # 베스트 아이템 csv로 저장
     def data_save(self, item, conf):
         if conf['total_line'] % conf['del_line_num'] == 0:
             # 스트림 닫고 업로드
