@@ -19,10 +19,10 @@ ua = UserAgent()
 # 인기 검색어 / 브랜드 request url
 best_keyword_url = 'https://search.shopping.naver.com/best100v2/detail/kwd.nhn'
 
-category_depth_allow = 1
+category_depth_allow = 3
 crawl_item = True
-crawl_keyword = False
-crawl_brand = False
+crawl_keyword = True
+crawl_brand = True
 
 if os.environ['ENV'] == 'prod':
     category_depth_allow = 3
@@ -58,6 +58,13 @@ class NaverBestCategorySpider(scrapy.Spider):
         'DOWNLOAD_DELAY': 0.2,
         'ITEM_PIPELINES': {
             'naver_scrap.pipelines.NaverScrapPipeline': 300,
+        },
+        'SPIDER_MIDDLEWARES': {
+            'naver_scrap.middlewares.NaverScrapSpiderMiddleware': 543,
+        },
+        'DOWNLOADER_MIDDLEWARES': {
+            'naver_scrap.middlewares.NaverScrapDownloaderMiddleware': 543,
+            'naver_scrap.middlewares.SleepRetryMiddleware': 100,
         },
         # 크롤링 여부
         'CRAWL_ITEM': crawl_item,
