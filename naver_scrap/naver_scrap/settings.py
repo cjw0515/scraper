@@ -32,6 +32,7 @@ except Exception as e:
 
 BOT_NAME = 'naver_scrap'
 BOT_ID = ''
+PROJECT_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 SPIDER_MODULES = ['naver_scrap.spiders']
 NEWSPIDER_MODULE = 'naver_scrap.spiders'
@@ -112,18 +113,16 @@ RETRY_ENABLED = True
 RETRY_TIMES = 5
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-SPIDER_MIDDLEWARES = {
-    'naver_scrap.middlewares.NaverScrapSpiderMiddleware': 543,
-}
+# SPIDER_MIDDLEWARES = {
+#     'naver_scrap.middlewares.NaverScrapSpiderMiddleware': 543,
+# }
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-DOWNLOADER_MIDDLEWARES = {
-    'naver_scrap.middlewares.NaverScrapDownloaderMiddleware': 543,
-    'naver_scrap.middlewares.SleepRetryMiddleware': 100,
-    # 'naver_scrap.middlewares.NaverScrapDownloaderProxyMiddleware': 543,
-    # 'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': 110
-}
+# DOWNLOADER_MIDDLEWARES = {
+#     'naver_scrap.middlewares.NaverScrapDownloaderMiddleware': 543,
+#     'naver_scrap.middlewares.SleepRetryMiddleware': 100,
+# }
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
