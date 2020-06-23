@@ -23,7 +23,6 @@ import re
 
 dir = os.path.join(get_project_settings().get('PROJECT_ROOT_PATH'), r"drivers/chromedriver")
 
-print('dir ', dir)
 FILE_EXSENSION = '.csv'
 
 def file_chk(origin_path, file_exs):
@@ -51,8 +50,6 @@ def s3_upload_file(a_key, s_key, file_name, file_path, bucket, object_path=None)
     :return: True if file was uploaded, else False
     """
 
-    print('bucket: ', bucket)
-    print('file_name: ', file_name)
     # Upload the file
     s3_client = boto3.client('s3', aws_access_key_id=a_key, aws_secret_access_key=s_key)
     obj_full_path = object_path + file_name
@@ -60,7 +57,6 @@ def s3_upload_file(a_key, s_key, file_name, file_path, bucket, object_path=None)
         res = s3_client.head_object(Bucket=bucket, Key=obj_full_path)
     except ClientError as e:
         # 파일 존재하지 않을 때
-        print('err code: ', e.response['Error']['Code'])
         if e.response['Error']['Code'] == '404':
             try:
                 s3_client.upload_file(file_path, bucket, obj_full_path)
@@ -79,7 +75,6 @@ def s3_upload_file(a_key, s_key, file_name, file_path, bucket, object_path=None)
             return s3_upload_file(a_key, s_key, changed_path, file_path, bucket, object_path=object_path)
         else:
             changed_path = file_name[:file_name.find(".csv")] + '(2)' + file_name[file_name.find(".csv"):]
-            print('changed_path: ', changed_path)
             return s3_upload_file(a_key, s_key, changed_path, file_path, bucket, object_path=object_path)
 
 
