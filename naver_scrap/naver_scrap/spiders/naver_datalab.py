@@ -1,6 +1,7 @@
 import scrapy
 import os
 from platform import system
+
 from scrapy.selector import Selector
 from scrapy.utils.project import get_project_settings
 
@@ -11,8 +12,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from fake_useragent import UserAgent
 
+import pythena
+import boto3
 from ast import literal_eval
 import re
+import logging
+from datetime import datetime, timedelta
+
 
 ua = UserAgent()
 url_pattern = r'^(https:\/\/www\.|https:\/\/)(datalab.naver.com\/keyword\/trendResult.naver\?hashKey=)'
@@ -32,10 +38,11 @@ class NaverDataLabSpider(scrapy.Spider):
         'DOWNLOADER_MIDDLEWARES': {
             'naver_scrap.middlewares.NaverScrapDownloaderMiddleware': 543,
             # 'naver_scrap.middlewares.SeleniumMiddleware': 100
-        }
+        },
+        'LOG_LEVEL': 'ERROR'
     }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, time_at=None, *args, **kwargs):
         super(NaverDataLabSpider, self).__init__(*args, **kwargs)
         CHROMEDRIVER_PATH = os.path.join(get_project_settings().get('PROJECT_ROOT_PATH')
                                          , r"drivers/chromedriver{}".format(".exe" if system() == "Windows" else ""))
@@ -45,13 +52,18 @@ class NaverDataLabSpider(scrapy.Spider):
         chrome_options = Options()
         if system() != "Windows":
             chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--log-level=3")
         chrome_options.add_argument(f"--window-size={WINDOW_SIZE}")
         prefs = {'download.default_directory': 'C:\Test'}
         chrome_options.add_experimental_option('prefs', prefs)
         driver = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH, chrome_options=chrome_options)
 
+        self.time_at = time_at if time_at else (datetime.now() + timedelta(days=-1)).strftime("%Y%m%d")
+        self.s3_id = get_project_settings().get('AWS_ACCESS_KEY_ID')
+        self.s3_sec = get_project_settings().get('AWS_SECRET_ACCESS_KEY')
         self.driver = driver
     # 스파이더가 크롤링을 시작할 반복 요청 (요청 목록을 반환하거나 생성기 함수를 작성할 수 있음)을 반환해야합니다. 후속 요청은 이러한 초기 요청에서 연속적으로 생성됩니다.
 
@@ -75,11 +87,6 @@ class NaverDataLabSpider(scrapy.Spider):
                     EC.url_changes(driver.current_url)
                 )
                 for req in driver.requests:
-                    # print(
-                    #     'path: ', req.path,
-                    #     'code: ', req.response.status_code,
-                    #     'content-type: ', req.response.headers['Content-Type']
-                    # )
                     if req.response and p.match(req.path) is not None:
                         body = req.response.body
 
@@ -105,21 +112,47 @@ class NaverDataLabSpider(scrapy.Spider):
             el_period_btn.click()
             el_submit_btn.click()
 
+        if self.time_at and len(str(self.time_at)) != 8:
+            logging.log(logging.ERROR, '날짜가 올바르지 않습니다.')
+            return False
+
         self.driver.get(response.request.url)
+        athena_client = pythena.Athena(database='tenbyten'
+                                       , region='ap-northeast-2'
+                                       , session=boto3.session.Session(aws_access_key_id=self.s3_id
+                                                                       , aws_secret_access_key=self.s3_sec)
+                                       )
 
-        keyword = ["사과", "과자"]
+        y = self.time_at[:4]
+        m = self.time_at[4:6]
+        d = self.time_at[6:8]
 
-        for kwd in keyword:
+        sql = """select distinct keyword 
+                from nvshop_best_brand 
+                where year = {} 
+                and month = {} 
+                and day = {} 
+                and period = 'weekly'
+                """.format(y, m, d)
+
+        df = athena_client.execute(sql)
+        kwds = df[0]['keyword'].tolist()
+        print('total : ', len(kwds))
+        for i, kwd in enumerate(kwds, 1):
+            print('current index: ', i)
             set_keyword(self.driver, kwd)
             res = extract(self.driver)
-            for d in res['data']:
-                dt = d['period']
-                yield {
-                    'keyword': kwd,
-                    'period': '{}-{}-{}'.format(dt[:4], dt[4:6], dt[6:8]),
-                    'value': d['value'],
-                    'type': 'dlabtrend'
-                }
+            if res is not None:
+                for d in res['data']:
+                    dt = d['period']
+                    yield {
+                        'keyword': kwd,
+                        'period': '{}-{}-{}'.format(dt[:4], dt[4:6], dt[6:8]),
+                        'value': d['value'],
+                        'type': 'dlabtrend'
+                    }
+            else:
+                logging.log(logging.ERROR, 'error - res : {} / keyword : {}'.format(res, kwd))
 
         self.driver.quit()
 
