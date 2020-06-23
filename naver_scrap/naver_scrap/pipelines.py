@@ -9,6 +9,8 @@ import sys
 sys.path.append("C:/anaconda3/envs/scraper-10x10/Lib/site-packages")
 
 from scrapy import signals
+from scrapy.utils.project import get_project_settings
+
 import datetime
 import logging
 import boto3
@@ -16,29 +18,70 @@ from botocore.exceptions import ClientError
 from scrapy.exporters import CsvItemExporter, JsonItemExporter
 from scrapy.exceptions import DropItem
 import gzip, shutil, io, os
+import re
 
 
-def s3_upload_file(a_key, s_key, file_name, bucket, object_name=None):
+dir = os.path.join(get_project_settings().get('PROJECT_ROOT_PATH'), r"drivers/chromedriver")
+
+print('dir ', dir)
+FILE_EXSENSION = '.csv'
+
+def file_chk(origin_path, file_exs):
+    p = re.compile(r"(.+)\(([1-9])\)(.+)?")
+    m = p.match(origin_path)
+
+    if os.path.isfile(origin_path):
+        if m is not None:
+            idx = int(m.group(2))
+            idx += 1
+            changed_path = re.sub(p, r'\1({})\3'.format(idx), origin_path)
+            return file_chk(changed_path, file_exs)
+        else:
+            changed_path = origin_path[:origin_path.find(file_exs)] + '(2)' + origin_path[origin_path.find(file_exs):]
+            return file_chk(changed_path, file_exs)
+    else:
+        return origin_path
+
+def s3_upload_file(a_key, s_key, file_name, file_path, bucket, object_path=None):
     """Upload a file to an S3 bucket
 
     :param file_name: File to upload
     :param bucket: Bucket to upload to
-    :param object_name: S3 object name. If not specified then file_name is used
+    :param object_path: S3 object name. If not specified then file_name is used
     :return: True if file was uploaded, else False
     """
 
-    # If S3 object_name was not specified, use file_name
-    if object_name is None:
-        object_name = file_name
-
+    print('bucket: ', bucket)
+    print('file_name: ', file_name)
     # Upload the file
     s3_client = boto3.client('s3', aws_access_key_id=a_key, aws_secret_access_key=s_key)
+    obj_full_path = object_path + file_name
     try:
-        s3_client.upload_file(file_name, bucket, object_name)
+        res = s3_client.head_object(Bucket=bucket, Key=obj_full_path)
     except ClientError as e:
-        logging.error(e)
-        return False
-    return True
+        # 파일 존재하지 않을 때
+        print('err code: ', e.response['Error']['Code'])
+        if e.response['Error']['Code'] == '404':
+            try:
+                s3_client.upload_file(file_path, bucket, obj_full_path)
+            except ClientError as e:
+                logging.error(e)
+                return False
+            return True
+    else:
+        # 파일 존재할 시 파일 명 수정해서 다시 콜
+        p = re.compile(r"(.+)\(([1-9])\)(.+)?")
+        m = p.match(file_name)
+        if m is not None:
+            idx = int(m.group(2))
+            idx += 1
+            changed_path = re.sub(p, r'\1({})\3'.format(idx), file_name)
+            return s3_upload_file(a_key, s_key, changed_path, file_path, bucket, object_path=object_path)
+        else:
+            changed_path = file_name[:file_name.find(".csv")] + '(2)' + file_name[file_name.find(".csv"):]
+            print('changed_path: ', changed_path)
+            return s3_upload_file(a_key, s_key, changed_path, file_path, bucket, object_path=object_path)
+
 
 
 def mk_gz(file, gz_name):
@@ -92,7 +135,7 @@ class NaverScrapPipeline:
             'total_line': 1,
             'del_line_num': 3000,
             'file': None,
-            'file_name': 'best_kwd-{0}.csv'.format(instance_id),
+            'file_name': 'test_best_kwd-{0}.csv'.format(instance_id),
             'exporter': None,
             'is_upload': True,
             'op_stat': crawl_op_stat['crawl_keyword'],
@@ -131,7 +174,8 @@ class NaverScrapPipeline:
     def open_spider(self, spider):
         for conf in self.data_conf_cont[spider.name]:
             if conf['op_stat']:
-                conf['file'] = open('1_' + conf['file_name'], 'wb')
+                file_name = file_chk('1_' + conf['file_name'], FILE_EXSENSION)
+                conf['file'] = open(file_name, 'wb')
                 conf['exporter'] = CsvItemExporter(conf['file'], encoding='utf-8', include_headers_line=False)
                 conf['exporter'].start_exporting()
 
@@ -163,9 +207,9 @@ class NaverScrapPipeline:
         if conf['total_line'] % conf['del_line_num'] == 0:
             # 스트림 닫고 업로드
             self.close_exporter(conf['file'], s3_group=conf['s3_group'], is_upload=conf['is_upload'])
-            conf['file'] = open('{0}_{1}'.format(round(conf['total_line'] / conf['del_line_num'] + 1)
-                                                 , conf['file_name'])
-                                , 'wb')
+            file_name = file_chk('{0}_{1}'.format(round(conf['total_line'] / conf['del_line_num'] + 1), conf['file_name'])
+                                 , FILE_EXSENSION)
+            conf['file'] = open(file_name, 'wb')
             conf['exporter'] = CsvItemExporter(conf['file'], encoding='utf-8', include_headers_line=False)
 
         conf['total_line'] += 1
@@ -180,12 +224,13 @@ class NaverScrapPipeline:
         dt = datetime.datetime.now()
         object_name = '{0}/year={1}/month={2}/day={3}/'.format(s3_group, dt.year, dt.strftime('%m'),
                                                                dt.strftime('%d'))
-        bucket_path = self.bucket_path_prefix + object_name + gz_name
+        bucket_path = self.bucket_path_prefix + object_name
 
         if is_upload:
             s3_upload_file(
                 self.s3_access_key_id,
                 self.s3_access_key_secret,
+                gz_name,
                 gz_name,
                 self.bucket_name,
                 bucket_path
