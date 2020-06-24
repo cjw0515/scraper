@@ -51,7 +51,7 @@ if os.environ['ENV'] == 'dev':
     LOG_LEVEL = 'INFO'
 else:
     FILE_REMOVE = True
-    LOG_LEVEL = 'INFO'
+    LOG_LEVEL = 'ERROR'
 
 # FEEDS = {
 #     's3://bi-temp/datalake/crawling/test.json': {
