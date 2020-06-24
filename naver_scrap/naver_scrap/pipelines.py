@@ -130,7 +130,7 @@ class NaverScrapPipeline:
             'total_line': 1,
             'del_line_num': 3000,
             'file': None,
-            'file_name': 'test_best_kwd-{0}.csv'.format(instance_id),
+            'file_name': 'best_kwd-{0}.csv'.format(instance_id),
             'exporter': None,
             'is_upload': True,
             'op_stat': crawl_op_stat['crawl_keyword'],
