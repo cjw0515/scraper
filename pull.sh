@@ -1,5 +1,4 @@
 #!/bin/bash
+cd home/crawladmin/scraper/
 pwd
-export PATH=$PATH:/snap/bin
-echo $PATH
 git pull origin master
