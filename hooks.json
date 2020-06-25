@@ -2,6 +2,6 @@
   {
     "id": "pull",
     "execute-command": "/home/crawladmin/scraper/pull.sh",
-    "command-working-directory": "/"
+    "command-working-directory": "/home/crawladmin/scraper"
   }
 ]
