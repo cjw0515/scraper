@@ -25,3 +25,4 @@ env.*
 *.log
 *_bak.py
 setup.py
+snap/

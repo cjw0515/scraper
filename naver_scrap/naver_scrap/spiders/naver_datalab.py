@@ -52,7 +52,6 @@ class NaverDataLabSpider(scrapy.Spider):
         chrome_options = Options()
         if system() != "Windows":
             chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--log-level=3")
@@ -137,9 +136,9 @@ class NaverDataLabSpider(scrapy.Spider):
 
         df = athena_client.execute(sql)
         kwds = df[0]['keyword'].tolist()
-        print('total : ', len(kwds))
+        logging.log(logging.INFO, 'total :' + str(len(kwds)))
         for i, kwd in enumerate(kwds, 1):
-            print('current index: ', i)
+            logging.log(logging.INFO, 'current index: ' + str(i))
             set_keyword(self.driver, kwd)
             res = extract(self.driver)
             if res is not None:
