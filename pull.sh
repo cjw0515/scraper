@@ -1,4 +1,3 @@
 #!/bin/bash
 pwd
-/usr/bin/git pull origin master
-
+git pull origin master
