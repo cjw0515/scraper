@@ -6,6 +6,7 @@ phases:
       python: 3.8
     commands:
       - echo 배포 모듈 설치중...
+      - curl http://13.125.172.27:9000/hello
   pre_build:
     commands:
       - echo 의존성 설치중...
