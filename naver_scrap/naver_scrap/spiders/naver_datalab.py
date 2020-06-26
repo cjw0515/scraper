@@ -16,6 +16,7 @@ import pythena
 import boto3
 from ast import literal_eval
 import re
+from math import ceil, floor
 import logging
 from datetime import datetime, timedelta
 
@@ -42,7 +43,7 @@ class NaverDataLabSpider(scrapy.Spider):
         'LOG_LEVEL': 'ERROR'
     }
 
-    def __init__(self, time_at=None, *args, **kwargs):
+    def __init__(self, time_at=None, page=None, *args, **kwargs):
         super(NaverDataLabSpider, self).__init__(*args, **kwargs)
         CHROMEDRIVER_PATH = os.path.join(get_project_settings().get('PROJECT_ROOT_PATH')
                                          , r"drivers/chromedriver{}".format(".exe" if system() == "Windows" else ""))
@@ -61,6 +62,7 @@ class NaverDataLabSpider(scrapy.Spider):
         driver = webdriver.Chrome(executable_path=CHROMEDRIVER_PATH, chrome_options=chrome_options)
 
         self.time_at = time_at if time_at else (datetime.now() + timedelta(days=-1)).strftime("%Y%m%d")
+        self.page = int(page) if page else 1
         self.s3_id = get_project_settings().get('AWS_ACCESS_KEY_ID')
         self.s3_sec = get_project_settings().get('AWS_SECRET_ACCESS_KEY')
         self.driver = driver
@@ -126,18 +128,32 @@ class NaverDataLabSpider(scrapy.Spider):
         m = self.time_at[4:6]
         d = self.time_at[6:8]
 
-        sql = """select distinct keyword 
-                from nvshop_best_brand 
-                where year = {} 
-                and month = {} 
-                and day = {} 
-                and period = 'weekly'
+        sql = """
+         select distinct keyword
+            from nvshop_best_brand
+           where year = {}
+             and month = {}
+             and day = {}
+             and period = 'weekly'
+           order by keyword
                 """.format(y, m, d)
 
         df = athena_client.execute(sql)
         kwds = df[0]['keyword'].tolist()
-        logging.log(logging.INFO, 'total :' + str(len(kwds)))
-        for i, kwd in enumerate(kwds, 1):
+        total_cnt = len(kwds)
+        max_page = 5
+        item_per_page = ceil(total_cnt / max_page)
+
+        current_page = self.page
+        total_pages = ceil(total_cnt / item_per_page)
+
+        st_num = ((current_page - 1) * item_per_page + 1 if current_page <= total_pages else (total_pages - 1) * item_per_page) - 1
+        end_num = (item_per_page * current_page if current_page < total_pages else total_cnt) - 1
+
+        res_arr = kwds[st_num:end_num]
+
+        logging.log(logging.INFO, 'total :' + str(total_cnt))
+        for i, kwd in enumerate(res_arr, 1):
             logging.log(logging.INFO, 'current index: ' + str(i))
             set_keyword(self.driver, kwd)
             res = extract(self.driver)
