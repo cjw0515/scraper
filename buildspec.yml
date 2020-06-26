@@ -5,7 +5,7 @@ phases:
     runtime-versions:
       python: 3.8
     commands:
-      - echo 배포 모듈 설치중...
+      - echo 배포 모듈 설치중..
   pre_build:
     commands:
       - echo 의존성 설치중...
