@@ -110,7 +110,7 @@ COOKIES_ENABLED = False
 
 # retry
 RETRY_ENABLED = True
-RETRY_TIMES = 5
+RETRY_TIMES = 10
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 # SPIDER_MIDDLEWARES = {

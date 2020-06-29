@@ -19,7 +19,7 @@ ua = UserAgent()
 # 인기 검색어 / 브랜드 request url
 best_keyword_url = 'https://search.shopping.naver.com/best100v2/detail/kwd.nhn'
 
-category_depth_allow = 3
+category_depth_allow = 1
 crawl_item = True
 crawl_keyword = True
 crawl_brand = True
@@ -55,7 +55,7 @@ class NaverBestCategorySpider(scrapy.Spider):
         'AUTOTHROTTLE_ENABLED': True,
         'AUTOTHROTTLE_START_DELAY': 5,
         'AUTOTHROTTLE_TARGET_CONCURRENCY': 1.0,
-        'DOWNLOAD_DELAY': 0.2,
+        'DOWNLOAD_DELAY': 0.5,
         'ITEM_PIPELINES': {
             'naver_scrap.pipelines.NaverScrapPipeline': 300,
         },
@@ -130,10 +130,13 @@ class NaverBestCategorySpider(scrapy.Spider):
         def get_goods_info(goods_info, info_key):
             res = ''
             for info in goods_info:
-                key = info.css('span::text').get().strip()
-                if key == info_key:
-                    res = info.css('em::text').get()
-                    break
+                try:
+                    key = info.css('span::text').get().strip()
+                    if key == info_key:
+                        res = info.css('em::text').get()
+                        break
+                except Exception as e:
+                    pass
 
             return res
 
@@ -148,8 +151,9 @@ class NaverBestCategorySpider(scrapy.Spider):
         top_mall_list = response.css('#_mainSummaryPrice > table > tbody > tr')
         sf = response.css('#_mainSummaryPrice > table > tbody > tr .sico_npay_plus')
         item_details = {}
+        # 데이터 구분값
         try:
-            item_details = {
+            item_details.update({
                 'seller_cnt': response.css('#snb > ul > li.mall_place.on > a > em::text').get(),
                 'single_mall_nm': get_single_mall_name(top_mall_list),
                 'rate': response.css('#container > div.summary_area > div.summary_info.'
@@ -165,13 +169,15 @@ class NaverBestCategorySpider(scrapy.Spider):
                 'wish_cnt': response.css('#jjim > em.cnt._keepCount::text').get(),
                 'review_cnt': response.css('#snb > ul > li.mall_review > a > em::text').get(),
                 'storefarm_num': len(sf),
-                'top_store_num': len(top_mall_list),
-            }
-            item_details.update(cb_kwargs)
-            # 데이터 구분값
-            item_details['type'] = 'nvshop_best_item'
+                'top_store_num': len(top_mall_list)
+            })
         except Exception as e:
+            print('error msg: ', e)
             logging.log(logging.ERROR, (cb_kwargs['item_nm']))
+
+        item_details.update(cb_kwargs)
+        item_details.update({'type': 'nvshop_best_item'})
+
         try:
             logging.log(logging.INFO,
                         'depth :[{0}] / 카테고리 :'.format(cb_kwargs['depth']) + cb_kwargs['cate_name'] + '/ 이름: '
@@ -258,7 +264,7 @@ class NaverBestCategorySpider(scrapy.Spider):
                                 .format(cate_id, item.attrib['data-nv-mid']),
                     'item_nm': item.css('p > a::attr(title)').get(),
                     'cate_name': cate_name,
-                    'depth': depth
+                    'depth': depth,
                 }
                 if len(item.css('div.info > span > a.btn_price_comp')) == 0:
                     details = {
@@ -276,7 +282,6 @@ class NaverBestCategorySpider(scrapy.Spider):
                         'review_cnt': '',
                         'storefarm_num': 0,
                         'top_store_num': 0,
-                        'type': 'nvshop_best_item'
                     }
                     details.update(detail_args)
                     logging.log(logging.INFO, '카테고리 :' + cate_name + '/ 이름: ' + details['item_nm'])
@@ -287,6 +292,7 @@ class NaverBestCategorySpider(scrapy.Spider):
                                           cb_kwargs=detail_args,
                                           # headers={'User-Agent': str(ua.chrome)}
                                           )
+
         """
             인기 검색어 파싱, 인기 브랜드 파싱            
         """

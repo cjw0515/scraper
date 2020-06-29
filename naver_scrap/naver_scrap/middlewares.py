@@ -121,7 +121,7 @@ class SleepRetryMiddleware(RetryMiddleware):
     def process_response(self, request, response, spider):
         if response.status in [429]:
             logging.log(logging.ERROR, 'sleep 30 seconds... at ' + request.url)
-            sleep(30)
+            sleep(15)
             reason = response_status_message(response.status)
             return self._retry(request, reason, spider) or response
 

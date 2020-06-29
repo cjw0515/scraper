@@ -24,6 +24,7 @@ import re
 dir = os.path.join(get_project_settings().get('PROJECT_ROOT_PATH'), r"drivers/chromedriver")
 
 FILE_EXSENSION = '.csv'
+ISUPLOAD = True
 
 def file_chk(origin_path, file_exs):
     p = re.compile(r"(.+)\(([1-9])\)(.+)?")
@@ -121,7 +122,7 @@ class NaverScrapPipeline:
             'file': None,
             'file_name': 'best_item-{0}.csv'.format(instance_id),
             'exporter': None,
-            'is_upload': True,
+            'is_upload': ISUPLOAD,
             'op_stat': crawl_op_stat['crawl_item'],
             's3_group': 'nvshop_best_item'
         }
@@ -132,7 +133,7 @@ class NaverScrapPipeline:
             'file': None,
             'file_name': 'best_kwd-{0}.csv'.format(instance_id),
             'exporter': None,
-            'is_upload': True,
+            'is_upload': ISUPLOAD,
             'op_stat': crawl_op_stat['crawl_keyword'],
             's3_group': 'nvshop_best_keyword'
         }
@@ -143,7 +144,7 @@ class NaverScrapPipeline:
             'file': None,
             'file_name': 'best_brd-{0}.csv'.format(instance_id),
             'exporter': None,
-            'is_upload': True,
+            'is_upload': ISUPLOAD,
             'op_stat': crawl_op_stat['crawl_brand'],
             's3_group': 'nvshop_best_brand'
         }
@@ -154,7 +155,7 @@ class NaverScrapPipeline:
             'file': None,
             'file_name': 'trend_kwd-{0}.csv'.format(instance_id),
             'exporter': None,
-            'is_upload': True,
+            'is_upload': ISUPLOAD,
             'op_stat': crawl_op_stat['crawl_trend'],
             's3_group': 'dlabtrend'
         }
