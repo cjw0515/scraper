@@ -4,6 +4,8 @@ from platform import system
 
 from scrapy.selector import Selector
 from scrapy.utils.project import get_project_settings
+from scrapy.loader import ItemLoader
+from ..items import NaverDataLabTrend
 
 from seleniumwire import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -160,12 +162,14 @@ class NaverDataLabSpider(scrapy.Spider):
             if res is not None:
                 for d in res['data']:
                     dt = d['period']
-                    yield {
-                        'keyword': kwd,
-                        'period': '{}-{}-{}'.format(dt[:4], dt[4:6], dt[6:8]),
-                        'value': d['value'],
-                        'type': 'dlabtrend'
-                    }
+                    il = ItemLoader(item=NaverDataLabTrend())
+
+                    il.add_value('keyword', kwd)
+                    il.add_value('period', '{}-{}-{}'.format(dt[:4], dt[4:6], dt[6:8]))
+                    il.add_value('value', d['value'])
+                    il.add_value('type', 'dlabtrend')
+
+                    yield il.load_item()
             else:
                 logging.log(logging.ERROR, 'error - res : {} / keyword : {}'.format(res, kwd))
 

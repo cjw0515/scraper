@@ -24,6 +24,7 @@ import re
 dir = os.path.join(get_project_settings().get('PROJECT_ROOT_PATH'), r"drivers/chromedriver")
 
 FILE_EXSENSION = '.csv'
+CSV_HEAD = False
 ISUPLOAD = True
 
 def file_chk(origin_path, file_exs):
@@ -95,7 +96,9 @@ class NaverScrapPipeline:
             'crawl_keyword': crawler.settings.get('CRAWL_KEYWORD') or None,
             'crawl_brand': crawler.settings.get('CRAWL_BRAND') or None,
             # trend
-            'crawl_trend': True
+            'crawl_trend': True,
+            # category
+            'crawl_category': True,
         }
         return cls(
             s3_access_key_id=crawler.settings.get('AWS_ACCESS_KEY_ID'),
@@ -159,12 +162,23 @@ class NaverScrapPipeline:
             'op_stat': crawl_op_stat['crawl_trend'],
             's3_group': 'dlabtrend'
         }
+        # 트렌드 키워드
+        self.category_item_conf = {
+            'total_line': 1,
+            'del_line_num': 3000,
+            'file': None,
+            'file_name': 'category_item-{0}.csv'.format(instance_id),
+            'exporter': None,
+            'is_upload': ISUPLOAD,
+            'op_stat': crawl_op_stat['crawl_category'],
+            's3_group': 'nvshop_category_item'
+        }
         # 크롤링 묶음
         self.data_conf_cont = {
             'naver_best_category': [self.item_conf, self.kwd_conf, self.brd_conf],
-            'naver_datalab_trend': [self.trend_kwd_conf]
+            'naver_datalab_trend': [self.trend_kwd_conf],
+            'naver_category': [self.category_item_conf],
         }
-
 
     # 스파이더가 오픈될때 호출됨
     def open_spider(self, spider):
@@ -172,7 +186,7 @@ class NaverScrapPipeline:
             if conf['op_stat']:
                 file_name = file_chk('1_' + conf['file_name'], FILE_EXSENSION)
                 conf['file'] = open(file_name, 'wb')
-                conf['exporter'] = CsvItemExporter(conf['file'], encoding='utf-8', include_headers_line=False)
+                conf['exporter'] = CsvItemExporter(conf['file'], encoding='utf-8', include_headers_line=CSV_HEAD)
                 conf['exporter'].start_exporting()
 
     # 스파이더가 닫힐때 호출됨
@@ -184,6 +198,10 @@ class NaverScrapPipeline:
 
     # 매 파이프라인 컴포넌트마다 호출됨.
     def process_item(self, item, spider):
+        # 빈값 채우기
+        for field in item.fields:
+            item.setdefault(field, '')
+
         try:
             if self.item_conf['op_stat'] and item['type'] == 'nvshop_best_item':
                 self.data_save(item, self.item_conf)
@@ -193,8 +211,10 @@ class NaverScrapPipeline:
                 self.data_save(item, self.brd_conf)
             if self.trend_kwd_conf['op_stat'] and item['type'] == 'dlabtrend':
                 self.data_save(item, self.trend_kwd_conf)
+            if self.category_item_conf['op_stat'] and item['type'] == 'nvshop_category_item':
+                self.data_save(item, self.category_item_conf)
         except Exception as e:
-            print(e)
+            print('pipeline error: ', e)
             pass
 
         return item
@@ -206,7 +226,7 @@ class NaverScrapPipeline:
             file_name = file_chk('{0}_{1}'.format(round(conf['total_line'] / conf['del_line_num'] + 1), conf['file_name'])
                                  , FILE_EXSENSION)
             conf['file'] = open(file_name, 'wb')
-            conf['exporter'] = CsvItemExporter(conf['file'], encoding='utf-8', include_headers_line=False)
+            conf['exporter'] = CsvItemExporter(conf['file'], encoding='utf-8', include_headers_line=CSV_HEAD)
 
         conf['total_line'] += 1
         conf['exporter'].export_item(item)

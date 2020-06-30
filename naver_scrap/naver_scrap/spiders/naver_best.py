@@ -3,6 +3,8 @@ import sys, os
 
 sys.path.append("C:/anaconda3/envs/scraper-10x10/Lib/site-packages")
 import scrapy
+from scrapy.loader import ItemLoader
+from ..items import NaverBestItem, NaverBestKeyword, NaverBestBrand
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 from fake_useragent import UserAgent
@@ -185,7 +187,11 @@ class NaverBestCategorySpider(scrapy.Spider):
         except Exception as e:
             print('no cate_name')
 
-        yield item_details
+        il = ItemLoader(item=NaverBestItem())
+        for key, value in item_details.items():
+            il.add_value(key, value)
+
+        yield il.load_item()
         return
 
     def chk_ip(self, response):
@@ -202,12 +208,17 @@ class NaverBestCategorySpider(scrapy.Spider):
                 'rnk': rnk.css('em::text').get()[:-1],
                 'keyword': rnk.css('span.txt a::attr(title)').get().strip(),
                 'trend': elev_width if rnk_flg == '상승' else elev_width * -1 if rnk_flg == '하락' else 0,
-                'fixeddate': str(datetime.now()),
+                'fixeddate': datetime.now().strftime("%Y-%m-%d %X"),
             }
             keyword_data.update(cb_kwargs)
+
+            il = ItemLoader(item=NaverBestKeyword())
+            for key, value in keyword_data.items():
+                il.add_value(key, value)
+
             logging.log(logging.INFO, keyword_data)
 
-            yield keyword_data
+            yield il.load_item()
 
     def parse_best_brand(self, response, **cb_kwargs):
         rnk_list = response.css('#popular_srch_lst > li')
@@ -220,12 +231,17 @@ class NaverBestCategorySpider(scrapy.Spider):
                 'rnk': rnk.css('em::text').get()[:-1],
                 'keyword': rnk.css('span.txt a::attr(title)').get().strip(),
                 'trend': elev_width if rnk_flg == '상승' else elev_width * -1 if rnk_flg == '하락' else 0,
-                'fixeddate': str(datetime.now()),
+                'fixeddate': datetime.now().strftime("%Y-%m-%d %X"),
             }
             brand_data.update(cb_kwargs)
+
+            il = ItemLoader(item=NaverBestBrand())
+            for key, value in brand_data.items():
+                il.add_value(key, value)
+
             logging.log(logging.INFO, brand_data)
 
-            yield brand_data
+            yield il.load_item()
 
     def parse_morethan_second_depth(self, response, **cb_kwargs):
         """

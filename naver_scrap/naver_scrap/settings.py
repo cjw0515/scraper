@@ -47,7 +47,7 @@ BUCKET_NAME = 'bi-temp'
 BUCKET_PREFIX = 'datalake/crawling/'
 
 if os.environ['ENV'] == 'dev':
-    FILE_REMOVE = True
+    FILE_REMOVE = False
     LOG_LEVEL = 'INFO'
 else:
     FILE_REMOVE = True
