@@ -125,6 +125,10 @@ class NaverScrapPipeline:
             'file': None,
             'file_name': 'best_item-{0}.csv'.format(instance_id),
             'exporter': None,
+            'fields_to_export': ['brand', 'cate_id', 'cate_name', 'depth', 'female_rate', 'image_url', 'item_nm',
+                                 'item_url', 'manufacturer', 'min_price', 'nv_mid', 'prefer_age1', 'prefer_age2',
+                                 'rate', 'reg_date', 'review_cnt', 'rnk', 'seller_cnt', 'single_mall_nm',
+                                 'storefarm_num', 'top_store_num', 'type', 'wish_cnt'],
             'is_upload': ISUPLOAD,
             'op_stat': crawl_op_stat['crawl_item'],
             's3_group': 'nvshop_best_item'
@@ -136,6 +140,7 @@ class NaverScrapPipeline:
             'file': None,
             'file_name': 'best_kwd-{0}.csv'.format(instance_id),
             'exporter': None,
+            'fields_to_export': ['cate_id', 'fixeddate', 'gb', 'keyword', 'period', 'rnk', 'trend', 'type'],
             'is_upload': ISUPLOAD,
             'op_stat': crawl_op_stat['crawl_keyword'],
             's3_group': 'nvshop_best_keyword'
@@ -147,6 +152,7 @@ class NaverScrapPipeline:
             'file': None,
             'file_name': 'best_brd-{0}.csv'.format(instance_id),
             'exporter': None,
+            'fields_to_export': ['cate_id', 'fixeddate', 'gb', 'keyword', 'period', 'rnk', 'trend', 'type'],
             'is_upload': ISUPLOAD,
             'op_stat': crawl_op_stat['crawl_brand'],
             's3_group': 'nvshop_best_brand'
@@ -158,17 +164,21 @@ class NaverScrapPipeline:
             'file': None,
             'file_name': 'trend_kwd-{0}.csv'.format(instance_id),
             'exporter': None,
+            'fields_to_export': ['keyword', 'period', 'type', 'value'],
             'is_upload': ISUPLOAD,
             'op_stat': crawl_op_stat['crawl_trend'],
             's3_group': 'dlabtrend'
         }
-        # 트렌드 키워드
+        # 카테고리 아이템
         self.category_item_conf = {
             'total_line': 1,
-            'del_line_num': 3000,
+            'del_line_num': 6000,
             'file': None,
             'file_name': 'category_item-{0}.csv'.format(instance_id),
             'exporter': None,
+            'fields_to_export': ['cate_id', 'fixeddate', 'image_url', 'item_nm', 'item_url', 'max_price', 'min_price',
+                                 'nv_mid', 'rate', 'reg_date', 'review_cnt', 'rnk', 'seller_cnt', 'single_mall_nm',
+                                 'type', 'wish_cnt'],
             'is_upload': ISUPLOAD,
             'op_stat': crawl_op_stat['crawl_category'],
             's3_group': 'nvshop_category_item'
@@ -186,7 +196,10 @@ class NaverScrapPipeline:
             if conf['op_stat']:
                 file_name = file_chk('1_' + conf['file_name'], FILE_EXSENSION)
                 conf['file'] = open(file_name, 'wb')
-                conf['exporter'] = CsvItemExporter(conf['file'], encoding='utf-8', include_headers_line=CSV_HEAD)
+                conf['exporter'] = CsvItemExporter(conf['file'],
+                                                   encoding='utf-8',
+                                                   include_headers_line=CSV_HEAD)
+                conf['exporter'].fields_to_export = conf['fields_to_export']
                 conf['exporter'].start_exporting()
 
     # 스파이더가 닫힐때 호출됨
@@ -201,7 +214,6 @@ class NaverScrapPipeline:
         # 빈값 채우기
         for field in item.fields:
             item.setdefault(field, '')
-
         try:
             if self.item_conf['op_stat'] and item['type'] == 'nvshop_best_item':
                 self.data_save(item, self.item_conf)
@@ -227,6 +239,7 @@ class NaverScrapPipeline:
                                  , FILE_EXSENSION)
             conf['file'] = open(file_name, 'wb')
             conf['exporter'] = CsvItemExporter(conf['file'], encoding='utf-8', include_headers_line=CSV_HEAD)
+            conf['exporter'].fields_to_export = conf['fields_to_export']
 
         conf['total_line'] += 1
         conf['exporter'].export_item(item)
