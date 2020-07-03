@@ -299,9 +299,15 @@ class NaverBestCategorySpider(scrapy.Spider):
                         'storefarm_num': 0,
                         'top_store_num': 0,
                     }
+                    details.update({'type': 'nvshop_best_item'})
                     details.update(detail_args)
                     logging.log(logging.INFO, '카테고리 :' + cate_name + '/ 이름: ' + details['item_nm'])
-                    yield details
+
+                    il = ItemLoader(item=NaverBestItem())
+                    for key, value in details.items():
+                        il.add_value(key, value)
+
+                    yield il.load_item()
                 else:
                     yield response.follow(detail_args['item_url'],
                                           callback=self.parse_best_100_in_detail,
