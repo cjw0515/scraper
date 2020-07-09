@@ -27,6 +27,7 @@ COOKIES_ENABLED = False
 # retry
 RETRY_ENABLED = True
 RETRY_TIMES = 10
+
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 # CONCURRENT_REQUESTS = 32
 

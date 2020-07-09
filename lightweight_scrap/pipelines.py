@@ -105,7 +105,7 @@ class LightweightScrapPipeline:
         self.bucket_path_prefix = bucket_path_prefix
         self.bucket_name = bucket_name
         self.instance_id = instance_id
-        self.file_remove = file_remove
+        self.file_remove = True
         self.pipeline_conf = pipeline_conf
 
 

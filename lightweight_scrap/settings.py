@@ -22,6 +22,7 @@ COOKIES_ENABLED = False
 # retry
 RETRY_ENABLED = True
 RETRY_TIMES = 10
+
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'lightweight_scrap (+http://www.yourdomain.com)'
 
