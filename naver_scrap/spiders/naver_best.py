@@ -11,6 +11,7 @@ from fake_useragent import UserAgent
 from urllib.parse import urlparse, parse_qs, parse_qsl, urlencode, urlunparse
 import logging
 from datetime import datetime
+from definitions import common_setting
 
 ua = UserAgent()
 '''
@@ -73,6 +74,7 @@ class NaverBestCategorySpider(scrapy.Spider):
         'CRAWL_KEYWORD': crawl_keyword,
         'CRAWL_BRAND': crawl_brand,
     }
+    custom_settings.update(common_setting)
 
     def __init__(self, categories=None, depth=None, *args, **kwargs):
         super(NaverBestCategorySpider, self).__init__(*args, **kwargs)

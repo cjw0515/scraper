@@ -21,6 +21,7 @@ import re
 from math import ceil, floor
 import logging
 from datetime import datetime, timedelta
+from definitions import common_setting
 
 
 ua = UserAgent()
@@ -44,6 +45,7 @@ class NaverDataLabSpider(scrapy.Spider):
         },
         'LOG_LEVEL': 'ERROR'
     }
+    custom_settings.update(common_setting)
 
     def __init__(self, time_at=None, page=None, *args, **kwargs):
         super(NaverDataLabSpider, self).__init__(*args, **kwargs)
