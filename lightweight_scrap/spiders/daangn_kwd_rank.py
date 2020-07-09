@@ -18,10 +18,10 @@ class QuotesSpider(scrapy.Spider):
             'total_line': 1,
             'del_line_num': 6000,
             'file': None,
-            'file_name': 'daangn_rnk-{0}.csv'.format(get_project_settings().get('INSTANCE_ID')),
+            'file_name': 'daangn_rnk-{0}.csv'.format(common_setting['BOT_NAME']),
             'exporter': None,
             'fields_to_export': ['rnk', 'kwd', 'indecrease', 'fixeddate', 'type'],
-            'is_upload': False,
+            'is_upload': True,
             'op_stat': True,
             's3_group': name
         }]
