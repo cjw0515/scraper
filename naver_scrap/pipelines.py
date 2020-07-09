@@ -117,7 +117,7 @@ class NaverScrapPipeline:
         self.bucket_path_prefix = bucket_path_prefix
         self.bucket_name = bucket_name
         self.instance_id = instance_id
-        self.file_remove = True
+        self.file_remove = file_remove
         # 베스트 아이템
         self.item_conf = {
             'total_line': 1,

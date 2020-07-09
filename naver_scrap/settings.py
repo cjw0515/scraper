@@ -28,6 +28,13 @@ COOKIES_ENABLED = False
 RETRY_ENABLED = True
 RETRY_TIMES = 10
 
+if os.environ['ENV'] == 'dev':
+    FILE_REMOVE = True
+    LOG_LEVEL = 'INFO'
+else:
+    FILE_REMOVE = True
+    LOG_LEVEL = 'ERROR'
+
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 # CONCURRENT_REQUESTS = 32
 
