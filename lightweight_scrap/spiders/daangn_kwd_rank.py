@@ -3,8 +3,7 @@ from scrapy.utils.project import get_project_settings
 from scrapy.loader import ItemLoader
 from ..items import DaangnRnkKwd
 import logging
-from definitions import common_setting
-
+from global_settings import BOT_NAME
 
 class QuotesSpider(scrapy.Spider):
     # 스파이더의 식별자. 프로젝트 내에서 유일해야한다.
@@ -18,7 +17,7 @@ class QuotesSpider(scrapy.Spider):
             'total_line': 1,
             'del_line_num': 6000,
             'file': None,
-            'file_name': 'daangn_rnk-{0}.csv'.format(common_setting['BOT_NAME']),
+            'file_name': 'daangn_rnk-{0}.csv'.format(BOT_NAME),
             'exporter': None,
             'fields_to_export': ['rnk', 'kwd', 'indecrease', 'fixeddate', 'type'],
             'is_upload': True,
@@ -26,7 +25,6 @@ class QuotesSpider(scrapy.Spider):
             's3_group': name
         }]
     }
-    custom_settings.update(common_setting)
     # 스파이더가 크롤링을 시작할 반복 요청 (요청 목록을 반환하거나 생성기 함수를 작성할 수 있음)을 반환해야합니다. 후속 요청은 이러한 초기 요청에서 연속적으로 생성됩니다.
     def start_requests(self):
         urls = [

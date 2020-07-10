@@ -15,7 +15,6 @@ import requests
 
 import re
 import json
-from definitions import common_setting
 
 ua = UserAgent()
 ZZIM_API_URL = "https://search.shopping.naver.com/product-zzim/products"
@@ -48,7 +47,6 @@ class NaverCategorySpider(scrapy.Spider):
         #     'naver_scrap.middlewares.SleepRetryMiddleware': 100,
         # }
     }
-    custom_settings.update(common_setting)
 
     def __init__(self, categories=None, *args, **kwargs):
         super(NaverCategorySpider, self).__init__(*args, **kwargs)

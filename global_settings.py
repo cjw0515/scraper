@@ -25,11 +25,9 @@ AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
 BUCKET_NAME = 'bi-temp'
 BUCKET_PREFIX = 'datalake/crawling/'
 
-common_setting = {
-    'INSTANCE_ID': INSTANCE_ID,
-    'BOT_NAME': BOT_NAME,
-    'AWS_ACCESS_KEY_ID': AWS_ACCESS_KEY_ID,
-    'AWS_SECRET_ACCESS_KEY': AWS_SECRET_ACCESS_KEY,
-    'BUCKET_NAME': BUCKET_NAME,
-    'BUCKET_PREFIX': BUCKET_PREFIX,
-}
+if os.environ['ENV'] == 'dev':
+    FILE_REMOVE = False
+    LOG_LEVEL = 'INFO'
+else:
+    FILE_REMOVE = True
+    LOG_LEVEL = 'ERROR'

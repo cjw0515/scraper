@@ -8,9 +8,7 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-
-import os
-from dotenv import load_dotenv, find_dotenv
+from global_settings import *
 load_dotenv(find_dotenv())
 
 PROJECT_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -24,13 +22,6 @@ COOKIES_ENABLED = False
 # retry
 RETRY_ENABLED = True
 RETRY_TIMES = 10
-
-if os.environ['ENV'] == 'dev':
-    FILE_REMOVE = True
-    LOG_LEVEL = 'INFO'
-else:
-    FILE_REMOVE = True
-    LOG_LEVEL = 'ERROR'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'lightweight_scrap (+http://www.yourdomain.com)'
