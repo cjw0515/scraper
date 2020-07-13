@@ -18,14 +18,15 @@ import pythena
 import boto3
 from ast import literal_eval
 import re
-from math import ceil, floor
 import logging
 from datetime import datetime, timedelta
+from utils.utils import get_page_data
 
 
 ua = UserAgent()
 url_pattern = r'^(https:\/\/www\.|https:\/\/)(datalab.naver.com\/keyword\/trendResult.naver\?hashKey=)'
 p = re.compile(url_pattern)
+RUNNING_BOT = 5
 
 class NaverDataLabSpider(scrapy.Spider):
     # 스파이더의 식별자. 프로젝트 내에서 유일해야한다.
@@ -142,17 +143,8 @@ class NaverDataLabSpider(scrapy.Spider):
 
         df = athena_client.execute(sql)
         kwds = df[0]['keyword'].tolist()
-        total_cnt = len(kwds)
-        max_page = 5
-        item_per_page = ceil(total_cnt / max_page)
 
-        current_page = self.page
-        total_pages = ceil(total_cnt / item_per_page)
-
-        st_num = ((current_page - 1) * item_per_page + 1 if current_page <= total_pages else (total_pages - 1) * item_per_page) - 1
-        end_num = (item_per_page * current_page if current_page < total_pages else total_cnt) - 1
-
-        res_arr = kwds[st_num:end_num]
+        res_arr = get_page_data(kwds, RUNNING_BOT, self.page)
 
         logging.log(logging.INFO, 'total :' + str(total_cnt))
         for i, kwd in enumerate(res_arr, 1):

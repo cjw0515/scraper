@@ -5,7 +5,7 @@ from ..items import DaangnRnkKwd
 import logging
 from global_settings import BOT_NAME
 
-class QuotesSpider(scrapy.Spider):
+class DaangnKwdRank(scrapy.Spider):
     # 스파이더의 식별자. 프로젝트 내에서 유일해야한다.
     name = "daangn_kwd_rank"
 

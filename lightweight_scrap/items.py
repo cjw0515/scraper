@@ -43,3 +43,21 @@ class DaangnRnkKwd(scrapy.Item):
     type = scrapy.Field(output_processor=TakeFirst())
 
     pass
+
+class DaangnPopItems(scrapy.Item):
+    title = scrapy.Field(
+        input_processor=MapCompose(add_quote),
+        output_processor=TakeFirst()
+    )
+    cate = scrapy.Field(output_processor=TakeFirst())
+    price = scrapy.Field(output_processor=TakeFirst())
+    interest = scrapy.Field(output_processor=TakeFirst())
+    chat = scrapy.Field(output_processor=TakeFirst())
+    view = scrapy.Field(output_processor=TakeFirst())
+    fixeddate = scrapy.Field(
+        input_processor=MapCompose(get_fixeddate),
+        output_processor=TakeFirst()
+    )
+    type = scrapy.Field(output_processor=TakeFirst())
+
+    pass

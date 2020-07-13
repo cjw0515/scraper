@@ -18,9 +18,6 @@ from scrapy.exceptions import DropItem
 import gzip, shutil, io, os
 import re
 
-
-dir = os.path.join(get_project_settings().get('PROJECT_ROOT_PATH'), r"drivers/chromedriver")
-
 FILE_EXSENSION = '.csv'
 CSV_HEAD = False
 
