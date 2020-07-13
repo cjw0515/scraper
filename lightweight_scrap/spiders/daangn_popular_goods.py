@@ -31,7 +31,8 @@ class DaangnPopGoodsSpider(scrapy.Spider):
             'file': None,
             'file_name': 'daangn_pop_goods-{0}.csv'.format(BOT_NAME),
             'exporter': None,
-            'fields_to_export': ['title', 'cate', 'price', 'interest', 'chat', 'view', 'fixeddate', 'type'],
+            'fields_to_export': ['title', 'cate', 'price', 'interest', 'chat', 'view'
+                , 'region1', 'region2', 'region3', 'fixeddate', 'type'],
             'is_upload': True,
             'op_stat': True,
             's3_group': name
@@ -70,6 +71,9 @@ class DaangnPopGoodsSpider(scrapy.Spider):
             il.add_value('interest', interest)
             il.add_value('chat', chat)
             il.add_value('view', view)
+            il.add_value('region1', cb_kwargs.get('depth1', ''))
+            il.add_value('region2', cb_kwargs.get('depth2', ''))
+            il.add_value('region3', cb_kwargs.get('depth3', ''))
             il.add_value('fixeddate', fixeddate)
             il.add_value('type', type)
 
@@ -84,6 +88,7 @@ class DaangnPopGoodsSpider(scrapy.Spider):
         for link in a:
             yield response.follow(link,
                                   callback=self.parse,
+                                  cb_kwargs=cb_kwargs,
                                   )
 
         if cb_kwargs['for_depth'] > depth_limit: return False

@@ -54,6 +54,9 @@ class DaangnPopItems(scrapy.Item):
     interest = scrapy.Field(output_processor=TakeFirst())
     chat = scrapy.Field(output_processor=TakeFirst())
     view = scrapy.Field(output_processor=TakeFirst())
+    region1 = scrapy.Field(output_processor=TakeFirst())
+    region2 = scrapy.Field(output_processor=TakeFirst())
+    region3 = scrapy.Field(output_processor=TakeFirst())
     fixeddate = scrapy.Field(
         input_processor=MapCompose(get_fixeddate),
         output_processor=TakeFirst()
