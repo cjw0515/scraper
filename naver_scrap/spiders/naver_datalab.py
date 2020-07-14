@@ -146,7 +146,6 @@ class NaverDataLabSpider(scrapy.Spider):
 
         res_arr = get_page_data(kwds, RUNNING_BOT, self.page)
 
-        logging.log(logging.INFO, 'total :' + str(total_cnt))
         for i, kwd in enumerate(res_arr, 1):
             logging.log(logging.INFO, 'current index: ' + str(i))
             set_keyword(self.driver, kwd)

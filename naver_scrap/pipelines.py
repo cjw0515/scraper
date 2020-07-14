@@ -10,6 +10,7 @@ sys.path.append("C:/anaconda3/envs/scraper-10x10/Lib/site-packages")
 
 from scrapy import signals
 from scrapy.utils.project import get_project_settings
+from utils.job_executer import exec_next_job
 
 import datetime
 import logging
@@ -208,6 +209,8 @@ class NaverScrapPipeline:
             if conf['op_stat']:
                 self.close_exporter(conf['file'], s3_group=conf['s3_group'], is_upload=conf['is_upload'])
                 conf['exporter'].finish_exporting()
+        # 다음 job 실행
+        exec_next_job(spider.name)
 
     # 매 파이프라인 컴포넌트마다 호출됨.
     def process_item(self, item, spider):
