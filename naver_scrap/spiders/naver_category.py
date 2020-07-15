@@ -5,12 +5,9 @@ sys.path.append("C:/anaconda3/envs/scraper-10x10/Lib/site-packages")
 import scrapy
 from scrapy.loader import ItemLoader
 from ..items import NaverCategoryItem
-from scrapy.linkextractors import LinkExtractor
-from scrapy.spiders import CrawlSpider, Rule
 from fake_useragent import UserAgent
-from urllib.parse import urlparse, parse_qs, parse_qsl, urlencode, urlunparse, urlsplit
+from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse, urlsplit
 import logging
-from datetime import datetime
 import requests
 
 import re

@@ -5,14 +5,9 @@ sys.path.append("C:/anaconda3/envs/scraper-10x10/Lib/site-packages")
 import scrapy
 from scrapy.loader import ItemLoader
 from ..items import NaverBestItem, NaverBestKeyword, NaverBestBrand
-from scrapy.linkextractors import LinkExtractor
-from scrapy.spiders import CrawlSpider, Rule
-from fake_useragent import UserAgent
 from urllib.parse import urlparse, parse_qs, parse_qsl, urlencode, urlunparse
 import logging
 from datetime import datetime
-
-ua = UserAgent()
 '''
     depth 제한 
     최대 4 최소 1    

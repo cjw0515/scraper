@@ -9,7 +9,6 @@ from ..items import NaverDataLabTrend
 
 from seleniumwire import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from fake_useragent import UserAgent
@@ -21,7 +20,6 @@ import re
 import logging
 from datetime import datetime, timedelta
 from utils.utils import get_page_data
-
 
 ua = UserAgent()
 url_pattern = r'^(https:\/\/www\.|https:\/\/)(datalab.naver.com\/keyword\/trendResult.naver\?hashKey=)'

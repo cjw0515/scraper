@@ -1,10 +1,9 @@
 import scrapy
-from scrapy.utils.project import get_project_settings
 from scrapy.loader import ItemLoader
 from ..items import DaangnPopItems
 import logging
 from global_settings import BOT_NAME
-from urllib.parse import urljoin, urlencode, quote_plus
+from urllib.parse import urljoin
 from utils.utils import get_page_data
 
 BASE_URL = "https://www.daangn.com/region/"
