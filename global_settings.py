@@ -27,7 +27,7 @@ BUCKET_PREFIX = 'datalake/crawling/'
 
 if os.environ['ENV'] == 'dev':
     FILE_REMOVE = False
-    LOG_LEVEL = 'INFO'
+    LOG_LEVEL = 'ERROR'
 else:
     FILE_REMOVE = True
     LOG_LEVEL = 'ERROR'
