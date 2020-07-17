@@ -1,4 +1,5 @@
 from math import ceil, floor
+from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse, urlsplit
 
 def get_page_data(target_arr, max_page, page):
     total_cnt = len(target_arr)
@@ -25,3 +26,18 @@ def get_page_data(target_arr, max_page, page):
 
 
     return target_arr[st_num:end_num]
+
+def qs_replace(org_url, key_to_change, val_to_change):
+    parts = urlparse(org_url)
+    qs = dict(parse_qsl(parts.query))
+
+    qs[key_to_change] = val_to_change
+    parts = parts._replace(query=urlencode(qs))
+    new_url = urlunparse(parts)
+
+    return new_url
+
+def get_qs(url):
+    parts = urlparse(url)
+    return dict(parse_qsl(parts.query))
+

@@ -29,6 +29,9 @@ def add_quote(value):
 def get_fixeddate(value):
     return datetime.now().strftime("%Y-%m-%d %X")
 
+def extrace_int(val):
+    return int(''.join(i for i in val if i.isdigit()) or 0)
+
 class DaangnRnkKwd(scrapy.Item):
     rnk = scrapy.Field(output_processor=TakeFirst())
     kwd = scrapy.Field(
@@ -61,6 +64,23 @@ class DaangnPopItems(scrapy.Item):
         input_processor=MapCompose(get_fixeddate),
         output_processor=TakeFirst()
     )
+    type = scrapy.Field(output_processor=TakeFirst())
+
+    pass
+
+
+class BestItems1300k(scrapy.Item):
+    rnk = scrapy.Field(output_processor=TakeFirst())
+    cate = scrapy.Field(output_processor=TakeFirst())
+    item_nm = scrapy.Field(input_processor=MapCompose(add_quote), output_processor=TakeFirst())
+    price = scrapy.Field(input_processor=MapCompose(extrace_int), output_processor=TakeFirst())
+    sale_price = scrapy.Field(input_processor=MapCompose(extrace_int), output_processor=TakeFirst())
+    item_code = scrapy.Field(output_processor=TakeFirst())
+    brand = scrapy.Field(output_processor=TakeFirst())
+    image_url = scrapy.Field(output_processor=TakeFirst())
+    review_cnt = scrapy.Field(input_processor=MapCompose(extrace_int), output_processor=TakeFirst())
+    like_cnt = scrapy.Field(input_processor=MapCompose(extrace_int), output_processor=TakeFirst())
+    fixeddate = scrapy.Field(input_processor=MapCompose(get_fixeddate), output_processor=TakeFirst())
     type = scrapy.Field(output_processor=TakeFirst())
 
     pass

@@ -5,17 +5,12 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 import sys
-
-from scrapy import signals
-from scrapy.utils.project import get_project_settings
 from utils.job_executer import exec_next_job
-
 import datetime
 import logging
 import boto3
 from botocore.exceptions import ClientError
 from scrapy.exporters import CsvItemExporter, JsonItemExporter
-from scrapy.exceptions import DropItem
 import gzip, shutil, io, os
 import re
 

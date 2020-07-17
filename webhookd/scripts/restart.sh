@@ -7,6 +7,8 @@ conda activate scraper-10x10
 nohup scrapyd &
 scrapyd-deploy naver_scrap -p naver_scrap
 scrapyd-deploy lightweight_scrap -p lightweight_scrap
+cd ~/scraper/logs
+rm -rf ./*
 cd ~/scraper/webhookd/
 killall webhookd
 nohup webhookd -listen-addr ":9000" &
