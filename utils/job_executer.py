@@ -2,9 +2,9 @@ import json
 import requests
 from global_settings import BOT_NAME
 
-DAY_JOB_SEQUENCE = ['naver_best_category', 'naver_category', 'daangn_popular_goods']
+DAY_JOB_SEQUENCE = ['naver_best_category', 'naver_category', 'daangn_popular_goods', '1300k_best_item']
 PROJECT_MAPPER = {
-    'lightweight_scrap' : ['daangn_kwd_rank', 'daangn_popular_goods'],
+    'lightweight_scrap' : ['daangn_kwd_rank', 'daangn_popular_goods', '1300k_best_item'],
     'naver_scrap': ['naver_best_category', 'naver_category', 'naver_datalab_trend']
 }
 REQ_DATA_PER_BOT = {
@@ -21,6 +21,9 @@ REQ_DATA_PER_BOT = {
         'daangn_popular_goods': {
             'page': "1",
         },
+        '1300k_best_item': {
+            'page': "1",
+        },
     },
     'bot2': {
         'naver_best_category': {
@@ -33,6 +36,9 @@ REQ_DATA_PER_BOT = {
             'categories': "50000009,50000003",
         },
         'daangn_popular_goods': {
+            'page': "2",
+        },
+        '1300k_best_item': {
             'page': "2",
         },
     },
@@ -49,6 +55,9 @@ REQ_DATA_PER_BOT = {
         'daangn_popular_goods': {
             'page': "3",
         },
+        '1300k_best_item': {
+            'page': "3",
+        },
     },
     'bot4': {
         'naver_best_category': {
@@ -61,6 +70,9 @@ REQ_DATA_PER_BOT = {
             'categories': "50000006,50000002,50000010",
         },
         'daangn_popular_goods': {
+            'page': "4",
+        },
+        '1300k_best_item': {
             'page': "4",
         },
     },
@@ -77,6 +89,9 @@ REQ_DATA_PER_BOT = {
         'daangn_popular_goods': {
             'page': "5",
         },
+        '1300k_best_item': {
+            'page': "5",
+        },
     },
     'local-pc': {
         'naver_best_category': {
@@ -89,6 +104,9 @@ REQ_DATA_PER_BOT = {
             'categories': "50000008",
         },
         'daangn_popular_goods': {
+            'page': "5",
+        },
+        '1300k_best_item': {
             'page': "5",
         },
     },
