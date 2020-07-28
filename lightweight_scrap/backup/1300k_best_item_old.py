@@ -1,7 +1,7 @@
 import scrapy
 from scrapy.loader import ItemLoader
 from scrapy.selector import Selector
-from ..items import BestItems1300k
+from lightweight_scrap.items import BestItems1300k
 import logging
 from global_settings import BOT_NAME
 from collections import OrderedDict
@@ -14,10 +14,9 @@ import requests
 ua = UserAgent()
 RUNNING_BOT = 5
 DETAIL_URL = 'https://www.1300k.com/shop/goodsDetailAjax.html?f_goodsno=215024441783'
-CATEGORY_URL = 'https://www.1300k.com/shop/best/bestAjax.html'
 
 class BestItem1300k(scrapy.Spider):
-    name = "1300k_best_item"
+    name = "1300k_best_item_old"
 
     custom_settings = {
         'ITEM_PIPELINES': {
@@ -32,8 +31,8 @@ class BestItem1300k(scrapy.Spider):
             'exporter': None,
             'fields_to_export': ['rnk', 'cate', 'item_nm', 'price', 'sale_price', 'item_code', 'brand',
                                  'image_url', 'review_cnt', 'like_cnt', 'fixeddate', 'type'],
-            'is_upload': True,
-            'op_stat': True,
+            'is_upload': False,
+            'op_stat': False,
             's3_group': name
         }]
     }
@@ -50,37 +49,37 @@ class BestItem1300k(scrapy.Spider):
             yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response, **cb_kwargs):
-        lis = response.css('#category > div > div > ul > li')
-        for idx, li in enumerate(lis, 1):
-            if idx > 1: break
-            cno = li.css('a::attr(cno)').getall()
-            current_category = li.css('a > span.txt::text').get()
-            args = {
-                'current_category': current_category
-            }
-            payload = {
-                'mode': 'BEST',
-                'cno': cno
-            }
-            yield scrapy.FormRequest(
-                url=CATEGORY_URL,
-                formdata=payload,
-                callback=self.parse_top100,
-                cb_kwargs=args,
-                method='POST'
-            )
+        if cb_kwargs.get('for_depth', 0) == 0:
+            category_links = response.xpath('//*[@id="idSpeCateList"]'
+                                            '//a[re:test(@href, "\/shop\/best\/best.html")]'
+                                            '//@href').getall()
+            print(category_links)
+            category_links = get_page_data(category_links, RUNNING_BOT, self.page)
 
-    def parse_top100(self, response, **cb_kwargs):
-        html = Selector(text=json.loads(response.text)['html'])
-        item_links = html.css('li a::attr(href)').getall()
+            for category in category_links:
+                cb_kwargs.update({'for_depth': 1})
+                print(category)
+                yield response.follow(category,
+                                      callback=self.parse,
+                                      cb_kwargs=cb_kwargs,
+                                      )
 
+            return False
+
+
+        current_category = response.css("#idSpeCateList > ul > li.cate_on > a::text").get()
+        item_links = response.xpath('//*[@id="container"]//span[contains(@class, "gname")]'
+                                   '//a[re:test(@href, "\/shop\/goodsDetail.html\?f_goodsno=")]'
+                                   '//@href').getall()
+        # print(current_category, '/ link cnt : ', len(item_links))
+        # item_links = list(OrderedDict((item, None) for item in item_links)) # 중복제거, 중복제거하니 100개 안나옴
         for rnk, link in enumerate(item_links, 1):
             # if rnk != 1: break # test
             item_code = get_qs(link).get('f_goodsno', '')
             ajax_url = qs_replace(DETAIL_URL, 'f_goodsno', item_code)
             item_kwargs = {
                 'rnk': rnk,
-                'cate': cb_kwargs.get('current_category', ''),
+                'cate': current_category,
                 'item_code': item_code,
                 'ajax_url': ajax_url
             }
@@ -120,4 +119,3 @@ class BestItem1300k(scrapy.Spider):
         il.add_value('type', self.name)
 
         yield il.load_item()
-
