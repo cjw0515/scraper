@@ -51,8 +51,8 @@ class BestItem1300k(scrapy.Spider):
 
     def parse(self, response, **cb_kwargs):
         lis = response.css('#category > div > div > ul > li')
+        lis = get_page_data(lis, RUNNING_BOT, self.page)
         for idx, li in enumerate(lis, 1):
-            if idx > 1: break
             cno = li.css('a::attr(cno)').getall()
             current_category = li.css('a > span.txt::text').get()
             args = {
