@@ -16,7 +16,7 @@ REQ_DATA_PER_BOT = {
             'page': "1",
         },
         'naver_category': {
-            'categories': "50000000,50000001,50000007",
+            'page': "1",
         },
         'daangn_popular_goods': {
             'page': "1",
@@ -33,7 +33,7 @@ REQ_DATA_PER_BOT = {
             'page': "2",
         },
         'naver_category': {
-            'categories': "50000009,50000003",
+            'page': "2",
         },
         'daangn_popular_goods': {
             'page': "2",
@@ -50,7 +50,7 @@ REQ_DATA_PER_BOT = {
             'page': "3",
         },
         'naver_category': {
-            'categories': "50000004,50000005",
+            'page': "3",
         },
         'daangn_popular_goods': {
             'page': "3",
@@ -67,7 +67,7 @@ REQ_DATA_PER_BOT = {
             'page': "4",
         },
         'naver_category': {
-            'categories': "50000006,50000002,50000010",
+            'page': "4",
         },
         'daangn_popular_goods': {
             'page': "4",
@@ -84,7 +84,7 @@ REQ_DATA_PER_BOT = {
             'page': "5",
         },
         'naver_category': {
-            'categories': "50000008",
+            'page': "5",
         },
         'daangn_popular_goods': {
             'page': "5",
