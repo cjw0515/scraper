@@ -26,7 +26,7 @@ dir = os.path.join(get_project_settings().get('PROJECT_ROOT_PATH'), r"drivers/ch
 
 FILE_EXSENSION = '.csv'
 CSV_HEAD = False
-ISUPLOAD = False
+ISUPLOAD = True
 
 def file_chk(origin_path, file_exs):
     p = re.compile(r"(.+)\(([1-9])\)(.+)?")

@@ -200,10 +200,15 @@ class NaverBestCategorySpider(scrapy.Spider):
             rnk_flg = rnk.css('span.vary span::text').get().strip()
             elev_width = int(rnk.css('span.vary::text')[1].get().strip() or 0)
 
+            if rnk_flg == '하락':
+                elev_width = elev_width * -1
+            elif rnk_flg == '진입':
+                elev_width = 1000
+
             keyword_data = {
                 'rnk': rnk.css('em::text').get()[:-1],
                 'keyword': rnk.css('span.txt a::attr(title)').get().strip(),
-                'trend': elev_width if rnk_flg == '상승' else elev_width * -1 if rnk_flg == '하락' else 0,
+                'trend': elev_width,
                 'fixeddate': datetime.now().strftime("%Y-%m-%d %X"),
             }
             keyword_data.update(cb_kwargs)
@@ -223,10 +228,15 @@ class NaverBestCategorySpider(scrapy.Spider):
             rnk_flg = rnk.css('span.vary span::text').get().strip()
             elev_width = int(rnk.css('span.vary::text')[1].get().strip() or 0)
 
+            if rnk_flg == '하락':
+                elev_width = elev_width * -1
+            elif rnk_flg == '진입':
+                elev_width = 1000
+
             brand_data = {
                 'rnk': rnk.css('em::text').get()[:-1],
                 'keyword': rnk.css('span.txt a::attr(title)').get().strip(),
-                'trend': elev_width if rnk_flg == '상승' else elev_width * -1 if rnk_flg == '하락' else 0,
+                'trend': elev_width,
                 'fixeddate': datetime.now().strftime("%Y-%m-%d %X"),
             }
             brand_data.update(cb_kwargs)
