@@ -24,6 +24,9 @@ class DaangnKwdRank(scrapy.Spider):
             's3_group': name
         }]
     }
+    def __init__(self, chain=1, *args, **kwargs):
+        super(DaangnKwdRank, self).__init__(*args, **kwargs)
+        self.use_crawl_chain = chain
     # 스파이더가 크롤링을 시작할 반복 요청 (요청 목록을 반환하거나 생성기 함수를 작성할 수 있음)을 반환해야합니다. 후속 요청은 이러한 초기 요청에서 연속적으로 생성됩니다.
     def start_requests(self):
         urls = [

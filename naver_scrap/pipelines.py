@@ -26,7 +26,7 @@ dir = os.path.join(get_project_settings().get('PROJECT_ROOT_PATH'), r"drivers/ch
 
 FILE_EXSENSION = '.csv'
 CSV_HEAD = False
-ISUPLOAD = True
+ISUPLOAD = False
 
 def file_chk(origin_path, file_exs):
     p = re.compile(r"(.+)\(([1-9])\)(.+)?")
@@ -101,6 +101,7 @@ class NaverScrapPipeline:
             # category
             'crawl_category': True,
         }
+        chain = crawler.spider.use_crawl_chain or 1
         return cls(
             s3_access_key_id=crawler.settings.get('AWS_ACCESS_KEY_ID'),
             s3_access_key_secret=crawler.settings.get('AWS_SECRET_ACCESS_KEY'),
@@ -108,17 +109,19 @@ class NaverScrapPipeline:
             bucket_name=crawler.settings.get('BUCKET_NAME'),
             instance_id=crawler.settings.get('INSTANCE_ID'),
             file_remove=crawler.settings.get('FILE_REMOVE'),
-            crawl_op_stat=crawl_op_stat
+            crawl_op_stat=crawl_op_stat,
+            chain=chain
         )
 
     def __init__(self, s3_access_key_id, s3_access_key_secret, bucket_path_prefix,
-                 bucket_name, instance_id, file_remove, crawl_op_stat):
+                 bucket_name, instance_id, file_remove, crawl_op_stat, chain):
         self.s3_access_key_id = s3_access_key_id
         self.s3_access_key_secret = s3_access_key_secret
         self.bucket_path_prefix = bucket_path_prefix
         self.bucket_name = bucket_name
         self.instance_id = instance_id
         self.file_remove = file_remove
+        self.chain = chain
         # 베스트 아이템
         self.item_conf = {
             'total_line': 1,
@@ -210,7 +213,7 @@ class NaverScrapPipeline:
                 self.close_exporter(conf['file'], s3_group=conf['s3_group'], is_upload=conf['is_upload'])
                 conf['exporter'].finish_exporting()
         # 다음 job 실행
-        exec_next_job(spider.name)
+        if self.chain == 1: exec_next_job(spider.name)
 
     # 매 파이프라인 컴포넌트마다 호출됨.
     def process_item(self, item, spider):

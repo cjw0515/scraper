@@ -9,8 +9,7 @@ from ..items import NaverCategoryItem
 from fake_useragent import UserAgent
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse, urlsplit
 import logging
-import requests
-from utils.utils import get_page_data
+from utils.utils import get_page_data, get_qs, rec_request
 
 import re
 import json
@@ -49,16 +48,17 @@ class NaverCategorySpider(scrapy.Spider):
         # }
     }
 
-    def __init__(self, page=None, *args, **kwargs):
+    def __init__(self, page=None, chain=1, *args, **kwargs):
         super(NaverCategorySpider, self).__init__(*args, **kwargs)
         self.page = int(page) if page else 1
+        self.use_crawl_chain = chain
 
     def start_requests(self):
         all_cate = []
         first_cate_urls = map(lambda x: "https://search.shopping.naver.com/category/category.nhn?cat_id={0}".format(x)
                    , FIRST_CATEGORIES)
         for url in first_cate_urls:
-            res = requests.get(url)
+            res = rec_request(url)
             html = Selector(text=res.text)
             cont = html.xpath('//*[@id="__next"]/div/div[2]/div')
 
@@ -76,7 +76,7 @@ class NaverCategorySpider(scrapy.Spider):
                                     '&pagingIndex=1&pagingSize=80&productSet=total')
 
         all_cate = list(set(all_cate))
-
+        all_cate.sort()
         all_cate = get_page_data(all_cate, 5, self.page)
         for url in all_cate:
             param = {'accumulater': 0, 'pre_page_prd_list': []}
@@ -105,7 +105,7 @@ class NaverCategorySpider(scrapy.Spider):
 
         local_accum = cb_kwargs['accumulater']
         try:
-            ajx_res = requests.get(ZZIM_API_URL, params={'nvMid': zzim_param}, headers={'urlprefix': '/api'})
+            ajx_res = rec_request(url=ZZIM_API_URL, params={'nvMid': zzim_param}, headers={'urlprefix': '/api'})
             zzim_dict.update(ajx_res.json()['zzim'])
         except Exception as e:
             logging.log(logging.ERROR, 'error sending ajax request : ' + e)

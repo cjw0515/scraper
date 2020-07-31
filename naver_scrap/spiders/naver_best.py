@@ -69,10 +69,11 @@ class NaverBestCategorySpider(scrapy.Spider):
         'CRAWL_BRAND': crawl_brand,
     }
 
-    def __init__(self, categories=None, depth=None, *args, **kwargs):
+    def __init__(self, categories=None, chain=1, depth=None, *args, **kwargs):
         super(NaverBestCategorySpider, self).__init__(*args, **kwargs)
         self.category_depth_allow = int(depth) if depth else int(category_depth_allow)
         self.categories = categories
+        self.use_crawl_chain = chain
 
     def parse_first_depth(self, response):
         """

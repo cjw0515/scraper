@@ -1,5 +1,6 @@
 from math import ceil, floor
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse, urlsplit
+import requests
 
 def get_page_data(target_arr, max_page, page):
     total_cnt = len(target_arr)
@@ -41,3 +42,9 @@ def get_qs(url):
     parts = urlparse(url)
     return dict(parse_qsl(parts.query))
 
+def rec_request(url, params=None, headers=None, retry=10):
+    res = requests.get(url, params=params, headers=headers)
+    if res.status_code == 200 or retry <= 0:
+        return res
+    else:
+        return rec_request(url, params=params, headers=headers, retry=retry-1)

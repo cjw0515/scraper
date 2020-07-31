@@ -37,9 +37,10 @@ class BestItem1300k(scrapy.Spider):
             's3_group': name
         }]
     }
-    def __init__(self, page=None, *args, **kwargs):
+    def __init__(self, page=None, chain=1, *args, **kwargs):
         super(BestItem1300k, self).__init__(*args, **kwargs)
         self.page = int(page) if page else 1
+        self.use_crawl_chain = chain
 
     def start_requests(self):
         urls = [

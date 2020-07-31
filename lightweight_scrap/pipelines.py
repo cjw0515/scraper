@@ -80,6 +80,7 @@ def mk_gz(file, gz_name):
 class LightweightScrapPipeline:
     @classmethod
     def from_crawler(cls, crawler):
+        chain = crawler.spider.use_crawl_chain or 1
         return cls(
             s3_access_key_id=crawler.settings.get('AWS_ACCESS_KEY_ID'),
             s3_access_key_secret=crawler.settings.get('AWS_SECRET_ACCESS_KEY'),
@@ -88,11 +89,12 @@ class LightweightScrapPipeline:
             instance_id=crawler.settings.get('INSTANCE_ID'),
             file_remove=crawler.settings.get('FILE_REMOVE'),
             pipeline_conf=crawler.settings.get('PIPELINE_CONF'),
-            spider_name=crawler.spider.name
+            spider_name=crawler.spider.name,
+            chain=chain,
         )
 
     def __init__(self, s3_access_key_id, s3_access_key_secret, bucket_path_prefix,
-                 bucket_name, instance_id, file_remove, pipeline_conf, spider_name):
+                 bucket_name, instance_id, file_remove, pipeline_conf, spider_name, chain):
         self.s3_access_key_id = s3_access_key_id
         self.s3_access_key_secret = s3_access_key_secret
         self.bucket_path_prefix = bucket_path_prefix
@@ -100,7 +102,7 @@ class LightweightScrapPipeline:
         self.instance_id = instance_id
         self.file_remove = file_remove
         self.pipeline_conf = pipeline_conf
-
+        self.chain = chain
 
         # 크롤링 묶음
         self.data_conf_cont = {spider_name: self.pipeline_conf}
@@ -124,7 +126,7 @@ class LightweightScrapPipeline:
                 self.close_exporter(conf['file'], s3_group=conf['s3_group'], is_upload=conf['is_upload'])
                 conf['exporter'].finish_exporting()
         # 다음 job 실행
-        exec_next_job(spider.name)
+        if self.chain == 1: exec_next_job(spider.name)
 
     # 매 파이프라인 컴포넌트마다 호출됨.
     def process_item(self, item, spider):

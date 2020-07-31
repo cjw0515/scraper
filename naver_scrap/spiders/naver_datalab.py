@@ -44,7 +44,7 @@ class NaverDataLabSpider(scrapy.Spider):
         'LOG_LEVEL': 'ERROR'
     }
 
-    def __init__(self, time_at=None, page=None, *args, **kwargs):
+    def __init__(self, time_at=None, page=None, chain=1, *args, **kwargs):
         super(NaverDataLabSpider, self).__init__(*args, **kwargs)
         CHROMEDRIVER_PATH = os.path.join(get_project_settings().get('PROJECT_ROOT_PATH')
                                          , r"drivers/chromedriver{}".format(".exe" if system() == "Windows" else ""))
@@ -64,6 +64,7 @@ class NaverDataLabSpider(scrapy.Spider):
 
         self.time_at = time_at if time_at else (datetime.now() + timedelta(days=-1)).strftime("%Y%m%d")
         self.page = int(page) if page else 1
+        self.use_crawl_chain = chain
         self.s3_id = get_project_settings().get('AWS_ACCESS_KEY_ID')
         self.s3_sec = get_project_settings().get('AWS_SECRET_ACCESS_KEY')
         self.driver = driver
