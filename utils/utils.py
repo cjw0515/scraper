@@ -1,6 +1,9 @@
 from math import ceil, floor
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse, urlsplit
 import requests
+from scrapy.http import HtmlResponse
+from scrapy.selector import Selector
+import json
 
 def get_page_data(target_arr, max_page, page):
     total_cnt = len(target_arr)
@@ -48,3 +51,23 @@ def rec_request(url, params=None, headers=None, retry=10):
         return res
     else:
         return rec_request(url, params=params, headers=headers, retry=retry-1)
+
+
+if __name__ == "__main__":
+    url = "https://search.shopping.naver.com/catalog/24407717556?cat_id=50000831&nv_mid=24407717556&NaPm=ct%3Dkizeljnk%7Cci%3Dbdcbdcc2e0399d25d8afcdc93af890de1c16e0b6%7Ctr%3Dsl%7Csn%3D95694%7Chk%3D8ed4c0e787209d6f915ce4d354273bfecb31d0fc"
+    response = rec_request(url=url)
+    res = HtmlResponse(url=url, body=response.content)
+    res = Selector(response=res)
+    dataLab = json.loads(res.css("#__NEXT_DATA__::text").get())['props']['pageProps']['initialState']['catalog']['dataLab']
+    info = json.loads(res.css("#__NEXT_DATA__::text").get())['props']['pageProps']['initialState']['catalog']['info']
+    rc = info['reviewCount']
+    pc = info['productCount']
+    fv = [x for x in dataLab['genderDemoValues'] if x['gender'] == 'F'][0]['value']
+    pa1 = [x for x in dataLab['ageDemoValues'] if x['rank'] == '1'][0]['age']
+    pa2 = [x for x in dataLab['ageDemoValues'] if x['rank'] == '2'][0]['age']
+    print(dataLab)
+    print(fv)
+    print(pa1)
+    print(pa2)
+    print(rc)
+    print(pc)

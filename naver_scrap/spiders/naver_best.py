@@ -8,6 +8,8 @@ from ..items import NaverBestItem, NaverBestKeyword, NaverBestBrand
 from urllib.parse import urlparse, parse_qs, parse_qsl, urlencode, urlunparse
 import logging
 from datetime import datetime
+from utils.utils import rec_request
+import json
 '''
     depth 제한 
     최대 4 최소 1    
@@ -15,11 +17,12 @@ from datetime import datetime
 
 # 인기 검색어 / 브랜드 request url
 best_keyword_url = 'https://search.shopping.naver.com/best100v2/detail/kwd.nhn'
+ZZIM_API_URL = "https://search.shopping.naver.com/product-zzim/products"
 
 category_depth_allow = 1
 crawl_item = True
-crawl_keyword = True
-crawl_brand = True
+crawl_keyword = False
+crawl_brand = False
 
 if os.environ['ENV'] == 'prod':
     category_depth_allow = 3
@@ -116,57 +119,52 @@ class NaverBestCategorySpider(scrapy.Spider):
                 yield scrapy.Request(url=url, callback=self.parse_first_depth)
 
     def parse_best_100_in_detail(self, response, **cb_kwargs):
-        def get_age_grades(charts, grade):
-            age = ''
-            for c in charts:
-                c_g = c.css('div.vertical_bar > div > span.grade::text').get()
-                if c_g is not None and str(grade) == str(c_g):
-                    age = c.css('div.label::text').get()
-                    break
-            return age
-
-        def get_goods_info(goods_info, info_key):
-            res = ''
-            for info in goods_info:
-                try:
-                    key = info.css('span::text').get().strip()
-                    if key == info_key:
-                        res = info.css('em::text').get()
-                        break
-                except Exception as e:
-                    pass
-
-            return res
-
         def get_single_mall_name(top_mall_list):
             if len(top_mall_list) == 1:
-                return top_mall_list[0].css('td.mall_area > div > span.mall > a::text').get().strip() or ''
+                return top_mall_list[0].xpath('./img/@alt').get() or top_mall_list[0].xpath('./text()').get()
 
             # _mainSummaryPrice > table > tbody > tr:nth-child(2) > td.mall_area > div > span.mall_cell > span
 
-        chart = response.css('#bar-container > ul > li')
-        goods_info = response.css('#container div.goods_info div.info_inner span')
-        top_mall_list = response.css('#_mainSummaryPrice > table > tbody > tr')
-        sf = response.css('#_mainSummaryPrice > table > tbody > tr .sico_npay_plus')
+        # 스크립트 데이터
+        rc, pc, fv, pa1, pa2 = None, None, None, None, None
+        try:
+            dt = json.loads(response.css("#__NEXT_DATA__::text").get())
+            data_lab = dt['props']['pageProps']['initialState']['catalog']['dataLab']
+            info = dt['props']['pageProps']['initialState']['catalog']['info']
+            rc = info['reviewCount']
+            pc = info['productCount']
+            fv = [x for x in data_lab['genderDemoValues'] if x['gender'] == 'F'][0]['value']
+            pa1 = [x for x in data_lab['ageDemoValues'] if x['rank'] == '1'][0]['age']
+            pa2 = [x for x in data_lab['ageDemoValues'] if x['rank'] == '2'][0]['age']
+        except Exception as e:
+            pass
+
+        top_mall_list = response.xpath('//a[starts-with(@class, "productByMall_mall")]').getall()
         item_details = {}
+        zzim_cnt = 0
+
+        # 찜
+        try:
+            ajx_res = rec_request(url=ZZIM_API_URL, params={'nvMid': cb_kwargs['nv_mid']}, headers={'urlprefix': '/api'})
+            zzim_cnt = ajx_res.json()['zzim'][str(cb_kwargs['nv_mid'])]['count']
+        except Exception as e:
+            logging.log(logging.ERROR, 'error sending ajax request : ' + e)
         # 데이터 구분값
         try:
             item_details.update({
-                'seller_cnt': response.css('#snb > ul > li.mall_place.on > a > em::text').get(),
+                'seller_cnt': pc,
                 'single_mall_nm': get_single_mall_name(top_mall_list),
-                'rate': response.css('#container > div.summary_area > div.summary_info.'
-                                     '_itemSection > div > div.h_area > div > div.gpa::text').get(),
-                'prefer_age1': get_age_grades(chart, 1),
-                'prefer_age2': get_age_grades(chart, 2),
-                'female_rate': response.css(
-                    '#modelDemographyGraph > div.chart_area > div.gender._gender::attr(data-f)').get(),
-                'min_price': response.css('#content > div > div.summary_cet > div.price_area > span > em::text').get(),
-                'manufacturer': get_goods_info(goods_info, '제조사'),
-                'brand': get_goods_info(goods_info, '브랜드'),
-                'reg_date': get_goods_info(goods_info, '등록일').replace(".", "-") + "01",
-                'wish_cnt': response.css('#jjim > em.cnt._keepCount::text').get(),
-                'review_cnt': response.css('#snb > ul > li.mall_review > a > em::text').get(),
-                'storefarm_num': len(sf),
+                'rate': response.xpath('//div[starts-with(@class, "top_grade")]/text()').get(),
+                'prefer_age1': pa1,
+                'prefer_age2': pa2,
+                'female_rate': fv,
+                'min_price': response.xpath('//em[starts-with(@class, "lowestPrice_num")]/text()').get(),
+                'manufacturer': response.xpath('//span[starts-with(@class, "top_cell_")][contains(., "제조사")]/em/text()').get(),
+                'brand': response.xpath('//span[starts-with(@class, "top_cell_")][contains(., "브랜드")]/em/text()').get(),
+                'reg_date': response.xpath('//span[starts-with(@class, "top_cell_")][contains(., "등록일")]/em/text()').get(),
+                'wish_cnt': zzim_cnt,
+                'review_cnt': rc,
+                'storefarm_num': len(response.css('tbody span[class^="n_ico_npay_plus"]')),
                 'top_store_num': len(top_mall_list)
             })
         except Exception as e:
