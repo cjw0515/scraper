@@ -1,11 +1,12 @@
 import pythena
 import boto3
 from math import ceil, floor
+import os
 
 athena_client = pythena.Athena(database='tenbyten'
                                , region='ap-northeast-2'
-                               , session=boto3.session.Session(aws_access_key_id="AKIAIZJ6FGUDMED7YKJA"
-                                                               , aws_secret_access_key="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")
+                               , session=boto3.session.Session(aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID']
+                                                               , aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'])
 
                          )
 
